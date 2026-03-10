@@ -141,6 +141,41 @@ header .sub{font-size:.82rem;color:var(--ink3);margin-top:2px}
 /* Footer */
 footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size:.72rem;color:var(--ink4);line-height:1.8;text-align:center}
 
+/* PDF export styles */
+#pdf-export-wrapper .kpi-strip{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+#pdf-export-wrapper .kpi-card{flex:0 0 auto;min-width:160px;max-width:200px;background:var(--surface);border:1px solid var(--rule2);border-radius:10px;padding:12px 14px;position:relative}
+#pdf-export-wrapper .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+#pdf-export-wrapper .kpi-card .badge{font-size:9px;font-weight:700;color:#fff;padding:2px 7px;border-radius:10px;display:inline-block;margin-bottom:4px}
+#pdf-export-wrapper .kpi-card .mname{font-size:11px;font-weight:600;margin-bottom:6px}
+#pdf-export-wrapper .kpi-card .val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;margin-bottom:2px}
+#pdf-export-wrapper .kpi-card .sub{font-size:9px;color:var(--ink3)}
+#pdf-export-wrapper .cf-table{width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed}
+#pdf-export-wrapper .cf-table th,#pdf-export-wrapper .cf-table td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--rule2);word-wrap:break-word}
+#pdf-export-wrapper .cf-table th{text-align:left;font-weight:600}
+#pdf-export-wrapper .cf-table thead th:first-child{width:170px}
+#pdf-export-wrapper .cf-table td{font-family:'JetBrains Mono',monospace;font-size:10px}
+#pdf-export-wrapper .cf-table .section-row td{font-weight:700;font-size:9px;letter-spacing:.5px;padding:5px 8px;text-align:center;border-bottom:2px solid var(--rule)}
+#pdf-export-wrapper .cf-table .total-row td,#pdf-export-wrapper .cf-table .total-row th{font-weight:700;font-size:12px;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
+#pdf-export-wrapper .bar-item{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+#pdf-export-wrapper .bar-label{min-width:110px;font-size:10px;font-weight:500;text-align:right}
+#pdf-export-wrapper .bar-track{flex:1;height:24px;border-radius:4px;overflow:hidden;position:relative}
+#pdf-export-wrapper .bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff;font-weight:600}
+#pdf-export-wrapper .bar-val{min-width:90px;font-family:'JetBrains Mono',monospace;font-size:10px;text-align:left}
+#pdf-export-wrapper .nf-table{width:100%;border-collapse:collapse;font-size:10px}
+#pdf-export-wrapper .nf-table th,#pdf-export-wrapper .nf-table td{padding:6px 10px;text-align:center;border-bottom:1px solid var(--rule2)}
+#pdf-export-wrapper .nf-table th:first-child,#pdf-export-wrapper .nf-table td:first-child{text-align:left}
+#pdf-export-wrapper .compass-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:14px}
+#pdf-export-wrapper .compass-card{border:1px solid var(--rule2);border-radius:8px;padding:14px}
+#pdf-export-wrapper .compass-card h4{font-size:11px;margin-bottom:4px}
+#pdf-export-wrapper .compass-card .rec{font-size:13px;font-weight:700;margin-bottom:3px}
+#pdf-export-wrapper .compass-card .reason{font-size:10px}
+#pdf-export-wrapper .notice-box{border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:12px 16px;font-size:9px;line-height:1.7}
+#pdf-export-wrapper .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600}
+#pdf-export-wrapper .stars{font-size:11px;letter-spacing:1px}
+#pdf-export-wrapper .nc{display:block;font-size:8px;font-weight:400}
+#pdf-export-wrapper .bv{font-weight:700}
+#pdf-export-wrapper .wv{font-weight:700}
+
 @media(max-width:700px){
   .fg{grid-template-columns:1fr}
   .kpi-strip{flex-direction:column}
@@ -987,41 +1022,98 @@ function exportPDF(){
   if(resultsEl.style.display==='none'){alert('先に比較分析を実行してください');return}
 
   const isDark=document.body.classList.contains('dark');
-  // show all tabs
-  const panels=document.querySelectorAll('.tab-content');
-  const origDisplay=[];
-  panels.forEach(p=>{origDisplay.push(p.style.display);p.style.display='block'});
-  // hide input area
-  const inputEls=[document.getElementById('step1'),document.getElementById('step2'),document.getElementById('step3'),document.getElementById('actionBtns'),document.querySelector('header')];
-  const origInput=[];
-  inputEls.forEach(el=>{if(el){origInput.push(el.style.display);el.style.display='none'}});
-  // hide tab bar
-  const tabBar=document.getElementById('tabBar');
-  const origTabBar=tabBar.style.display;
-  tabBar.style.display='none';
+  const bgColor=isDark?'#0E0A06':'#FDFAF6';
+  const inkColor=isDark?'#F0E8DC':'#1A1410';
+  const ink3Color=isDark?'#7A6050':'#7A6858';
+  const accentColor=isDark?'#E8620A':'#C0550A';
+  const ruleColor=isDark?'rgba(245,150,26,.18)':'#D8CFC4';
+  const surfaceColor=isDark?'#251A10':'#FFFFFF';
 
-  const vname=(v('v-name')||'vehicle').replace(/\s+/g,'_');
+  const vname=v('v-name')||'車両';
+  const vnameFile=(v('v-name')||'vehicle').replace(/\s+/g,'_');
   const today=new Date();
   const dateStr=`${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const dateFmt=`${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+
+  // Build PDF-specific wrapper with proper page structure
+  const logoSrc=document.querySelector('header img')?.src||'';
+  const condText=document.getElementById('resultBanner').querySelector('.cond')?.textContent||'';
+
+  const wrapper=document.createElement('div');
+  wrapper.id='pdf-export-wrapper';
+  wrapper.style.cssText=`font-family:'Noto Sans JP',sans-serif;color:${inkColor};background:${bgColor};padding:0;width:277mm;`;
+
+  // --- PAGE 1: Cover + KPI ---
+  const coverHTML=`
+    <div style="padding:20mm 12mm 10mm;min-height:140mm;">
+      <div style="text-align:center;margin-bottom:30px;">
+        ${logoSrc?`<img src="${logoSrc}" style="height:50px;margin-bottom:12px;" crossorigin="anonymous">`:''}
+        <h1 style="font-family:'Lora',serif;font-size:22px;color:${accentColor};margin:0 0 4px;">Vehicle CF Calculator</h1>
+        <div style="font-size:11px;color:${ink3Color};">社用車 取得方法 比較分析レポート — U&I Consulting</div>
+      </div>
+      <div style="background:${surfaceColor};border:1px solid ${ruleColor};border-radius:10px;padding:24px 28px;margin:30px auto;max-width:600px;">
+        <div style="font-size:20px;font-weight:700;font-family:'Lora',serif;text-align:center;margin-bottom:12px;">${vname}</div>
+        <div style="font-size:11px;color:${ink3Color};text-align:center;line-height:1.8;">${condText}</div>
+        <div style="font-size:11px;color:${ink3Color};text-align:center;margin-top:8px;">作成日: ${dateFmt}</div>
+      </div>
+      <div style="margin-top:30px;">
+        <div style="font-size:13px;font-weight:700;color:${accentColor};margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid ${accentColor};">ランキング・サマリー</div>
+        ${document.getElementById('kpiStrip').outerHTML}
+      </div>
+    </div>
+  `;
+
+  // --- PAGE 2: CF Table ---
+  const cfHTML=`
+    <div style="page-break-before:always;padding:12mm 8mm;">
+      <div style="font-size:13px;font-weight:700;color:${accentColor};margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid ${accentColor};">詳細CF比較表</div>
+      <div style="overflow:visible;">${document.getElementById('tab-cf').innerHTML}</div>
+    </div>
+  `;
+
+  // --- PAGE 3: Graphs ---
+  const graphHTML=`
+    <div style="page-break-before:always;padding:12mm;">
+      <div style="font-size:13px;font-weight:700;color:${accentColor};margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid ${accentColor};">グラフ</div>
+      ${document.getElementById('tab-graph').innerHTML}
+    </div>
+  `;
+
+  // --- PAGE 4: Non-financial + Compass ---
+  const nfHTML=`
+    <div style="page-break-before:always;padding:12mm;">
+      <div style="font-size:13px;font-weight:700;color:${accentColor};margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid ${accentColor};">非財務評価</div>
+      ${document.getElementById('tab-nf').innerHTML}
+      <div style="margin-top:24px;font-size:13px;font-weight:700;color:${accentColor};margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid ${accentColor};">推奨コンパス</div>
+      ${document.getElementById('tab-compass').innerHTML}
+    </div>
+  `;
+
+  // --- Footer on last page ---
+  const footerHTML=`
+    <div style="margin-top:30px;padding:14px 0;border-top:1px solid ${ruleColor};font-size:9px;color:${ink3Color};text-align:center;line-height:1.8;">
+      ${document.getElementById('footerText').innerHTML}
+    </div>
+  `;
+
+  wrapper.innerHTML=coverHTML+cfHTML+graphHTML+nfHTML+footerHTML;
+
+  // Temporarily append to body for rendering
+  document.body.appendChild(wrapper);
 
   const opt={
-    margin:[10,8,10,8],
-    filename:`vehicle_cf_${vname}_${dateStr}.pdf`,
-    image:{type:'jpeg',quality:0.92},
-    html2canvas:{scale:1.8,useCORS:true,backgroundColor:isDark?'#0E0A06':'#FDFAF6'},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-    pagebreak:{mode:['avoid-all','css']}
+    margin:[8,6,8,6],
+    filename:`vehicle_cf_${vnameFile}_${dateStr}.pdf`,
+    image:{type:'jpeg',quality:0.95},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:bgColor,width:wrapper.scrollWidth},
+    jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
+    pagebreak:{mode:['css'],before:[], avoid:['.kpi-card','.bar-item','.compass-card','tr']}
   };
 
-  html2pdf().set(opt).from(resultsEl).save().then(()=>{
-    // restore
-    panels.forEach((p,i)=>p.style.display=origDisplay[i]);
-    inputEls.forEach((el,i)=>{if(el)el.style.display=origInput[i]||''});
-    tabBar.style.display=origTabBar||'';
-    // restore active tab
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-    const activeTab=document.querySelector('.tab.active');
-    if(activeTab)document.getElementById(activeTab.dataset.tab).classList.add('active');
+  html2pdf().set(opt).from(wrapper).save().then(()=>{
+    document.body.removeChild(wrapper);
+  }).catch(()=>{
+    if(wrapper.parentNode) document.body.removeChild(wrapper);
   });
 }
 </script>
