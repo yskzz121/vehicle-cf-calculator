@@ -314,7 +314,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
   <div class="field" style="margin-bottom:14px">
     <label>比較期間</label>
     <div class="slider-wrap">
-      <input type="range" id="p-years" min="3" max="10" value="5" oninput="this.nextElementSibling.textContent=this.value+'年'">
+      <input type="range" id="p-years" min="3" max="10" value="5" oninput="this.nextElementSibling.textContent=this.value+'年';onPeriodChange()">
       <span class="slider-val">5年</span>
     </div>
   </div>
@@ -551,11 +551,13 @@ function dbApply(){
     document.getElementById('p-fuel').value=Math.round(1000/car.fuel_efficiency*fp*12);
   }
 
-  // sale & residual
+  // sale & residual (比較期間に連動)
   const total=n('v-total');
-  if(car.residual_ratio_5yr!=null&&total>0){
-    document.getElementById('p-sale').value=Math.round(total*car.residual_ratio_5yr);
-    document.getElementById('resi-z').value=Math.round(total*Math.max(0.4,car.residual_ratio_5yr));
+  const cmpYears=+document.getElementById('p-years').value||5;
+  const rr=getResidualRate(car,cmpYears);
+  if(rr!=null&&total>0){
+    document.getElementById('p-sale').value=Math.round(total*rr);
+    document.getElementById('resi-z').value=Math.round(total*Math.max(0.4,rr));
   }
 
   // eco (中古車は原則対象外)
@@ -582,11 +584,12 @@ function dbApply(){
     `;
   }else{
     const ecoTotal=(car.eco_cev||0)+(car.eco_weight||0)+(car.eco_perf||0)+(car.eco_green||0)*years+(car.eco_local||0);
+    const rrDisplay=getResidualRate(car,years);
     info.innerHTML=`
       <b>${car.maker} ${car.model} ${car.grade}</b><br>
       本体価格: <b>${(car.price/10000).toFixed(0)}万円</b>｜
       燃料: ${car.fuel_type}｜燃費: ${car.fuel_efficiency}${car.fuel_type==='EV'?'km/kWh':'km/L'}｜
-      5年残価率: ${(car.residual_ratio_5yr*100).toFixed(0)}%<br>
+      ${years}年残価率: ${rrDisplay!=null?(rrDisplay*100).toFixed(0)+'%':'—'}<br>
       ${ecoTotal>0?`🌿 エコカー減税・補助金合計（${years}年）: <b style="color:var(--green)">${fmt(ecoTotal)}</b>｜CEV補助: ${fmt(car.eco_cev||0)}｜重量税軽減: ${fmt(car.eco_weight||0)}｜グリーン化: ${fmt((car.eco_green||0)*years)}`:'エコカー減税: 対象外'}
     `;
   }
@@ -594,6 +597,43 @@ function dbApply(){
 }
 
 loadDB();
+
+/* ===== RESIDUAL RATE HELPER ===== */
+function getResidualRate(car,years){
+  // New format: residual_rates array [yr1, yr2, ..., yr10]
+  if(car.residual_rates&&car.residual_rates.length>=years){
+    return car.residual_rates[years-1];
+  }
+  // Fallback: old format residual_ratio_5yr
+  if(car.residual_ratio_5yr!=null){
+    // Extrapolate roughly from 5yr rate
+    const r5=car.residual_ratio_5yr;
+    const annualDecay=Math.pow(r5,1/5);
+    return Math.max(0.05,Math.pow(annualDecay,years));
+  }
+  return null;
+}
+
+function getSelectedCar(){
+  const maker=document.getElementById('db-maker').value;
+  const model=document.getElementById('db-model').value;
+  const grade=document.getElementById('db-grade').value;
+  if(!maker||!model||!grade)return null;
+  return vehicleDB.find(v=>v.maker===maker&&v.model===model&&v.grade===grade)||null;
+}
+
+function onPeriodChange(){
+  const car=getSelectedCar();
+  if(!car)return;
+  const total=n('v-total');
+  if(total<=0)return;
+  const cmpYears=+document.getElementById('p-years').value||5;
+  const rr=getResidualRate(car,cmpYears);
+  if(rr!=null){
+    document.getElementById('p-sale').value=Math.round(total*rr);
+    document.getElementById('resi-z').value=Math.round(total*Math.max(0.4,rr));
+  }
+}
 
 /* ===== NEW / USED TOGGLE ===== */
 let isUsedCar=false;
