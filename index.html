@@ -80,14 +80,26 @@ header .sub{font-size:.82rem;color:var(--ink3);margin-top:2px}
 .result-banner h2{font-size:1.3rem;margin-bottom:4px}
 .result-banner .cond{font-size:.78rem;color:var(--ink3)}
 
-/* KPI Strip */
-.kpi-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:18px}
-.kpi-card{flex:0 0 auto;min-width:180px;background:var(--surface);border:1px solid var(--rule2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);position:relative}
-.kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
-.kpi-card .badge{font-size:.7rem;font-weight:700;color:#fff;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px}
-.kpi-card .mname{font-size:.82rem;font-weight:600;margin-bottom:8px}
-.kpi-card .val{font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;margin-bottom:2px}
-.kpi-card .sub{font-size:.72rem;color:var(--ink3)}
+/* Summary Cards */
+.summary-grid{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;margin-bottom:18px}
+.summary-card{flex:1 0 220px;min-width:220px;max-width:320px;background:var(--surface);border:1px solid var(--rule2);border-radius:var(--radius);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.summary-card .sc-top{height:4px}
+.summary-card .sc-head{padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+.summary-card .sc-head .sc-badge{font-size:.68rem;font-weight:700;color:#fff;padding:2px 8px;border-radius:10px}
+.summary-card .sc-head .sc-name{font-size:.85rem;font-weight:600}
+.summary-card .sc-body{padding:0 16px 14px}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:.78rem;line-height:1.5}
+.sc-row .sc-label{color:var(--ink3)}
+.sc-row .sc-val{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:500;text-align:right}
+.sc-row.sc-plus .sc-val{color:var(--red)}
+.sc-row.sc-minus .sc-val{color:var(--green);font-weight:600}
+.sc-divider{border:none;border-top:1px dashed var(--rule);margin:5px 0}
+.sc-subtotal{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:.82rem;font-weight:600;border-top:1px solid var(--rule);margin-top:2px}
+.sc-subtotal .sc-val{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+.sc-total{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;margin-top:4px;font-weight:700;font-size:.95rem;border-top:2px solid var(--accent);background:var(--bg)}
+.sc-total .sc-val{font-family:'JetBrains Mono',monospace;font-size:1rem}
+.sc-total.sc-best .sc-val{color:var(--green)}
+.sc-monthly{text-align:center;padding:4px 16px 10px;font-size:.72rem;color:var(--ink3);font-family:'JetBrains Mono',monospace}
 
 /* Tabs */
 .tabs{display:flex;gap:0;border-bottom:2px solid var(--rule2);margin-bottom:0}
@@ -142,13 +154,21 @@ header .sub{font-size:.82rem;color:var(--ink3);margin-top:2px}
 footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size:.72rem;color:var(--ink4);line-height:1.8;text-align:center}
 
 /* PDF export styles */
-#pdf-export-wrapper .kpi-strip{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-#pdf-export-wrapper .kpi-card{flex:0 0 auto;min-width:160px;max-width:200px;background:var(--surface);border:1px solid var(--rule2);border-radius:10px;padding:12px 14px;position:relative}
-#pdf-export-wrapper .kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
-#pdf-export-wrapper .kpi-card .badge{font-size:9px;font-weight:700;color:#fff;padding:2px 7px;border-radius:10px;display:inline-block;margin-bottom:4px}
-#pdf-export-wrapper .kpi-card .mname{font-size:11px;font-weight:600;margin-bottom:6px}
-#pdf-export-wrapper .kpi-card .val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;margin-bottom:2px}
-#pdf-export-wrapper .kpi-card .sub{font-size:9px;color:var(--ink3)}
+#pdf-export-wrapper .summary-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+#pdf-export-wrapper .summary-card{flex:1 0 180px;max-width:220px;border:1px solid var(--rule2);border-radius:8px;overflow:hidden}
+#pdf-export-wrapper .sc-top{height:3px}
+#pdf-export-wrapper .sc-head{padding:8px 10px 4px;display:flex;align-items:center;justify-content:space-between}
+#pdf-export-wrapper .sc-head .sc-badge{font-size:8px;font-weight:700;color:#fff;padding:1px 6px;border-radius:8px}
+#pdf-export-wrapper .sc-head .sc-name{font-size:10px;font-weight:600}
+#pdf-export-wrapper .sc-body{padding:0 10px 8px}
+#pdf-export-wrapper .sc-row{display:flex;justify-content:space-between;padding:2px 0;font-size:9px}
+#pdf-export-wrapper .sc-row .sc-val{font-family:'JetBrains Mono',monospace;font-size:9px}
+#pdf-export-wrapper .sc-subtotal{display:flex;justify-content:space-between;padding:4px 0;font-size:10px;font-weight:600;border-top:1px solid var(--rule)}
+#pdf-export-wrapper .sc-subtotal .sc-val{font-family:'JetBrains Mono',monospace;font-size:10px}
+#pdf-export-wrapper .sc-divider{border:none;border-top:1px dashed var(--rule);margin:3px 0}
+#pdf-export-wrapper .sc-total{display:flex;justify-content:space-between;padding:6px 10px;font-weight:700;font-size:11px;border-top:2px solid var(--accent)}
+#pdf-export-wrapper .sc-total .sc-val{font-family:'JetBrains Mono',monospace;font-size:11px}
+#pdf-export-wrapper .sc-monthly{text-align:center;padding:2px 10px 6px;font-size:8px}
 #pdf-export-wrapper .cf-table{width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed}
 #pdf-export-wrapper .cf-table th,#pdf-export-wrapper .cf-table td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--rule2);word-wrap:break-word}
 #pdf-export-wrapper .cf-table th{text-align:left;font-weight:600}
@@ -178,8 +198,8 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
 
 @media(max-width:700px){
   .fg{grid-template-columns:1fr}
-  .kpi-strip{flex-direction:column}
-  .kpi-card{min-width:auto}
+  .summary-grid{flex-direction:column}
+  .summary-card{min-width:auto;max-width:none}
   header{flex-direction:column;align-items:flex-start}
   .compass-grid{grid-template-columns:1fr}
 }
@@ -407,7 +427,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
 <!-- RESULTS -->
 <div id="results">
   <div class="result-banner" id="resultBanner"></div>
-  <div class="kpi-strip" id="kpiStrip"></div>
+  <div class="summary-grid" id="summaryGrid"></div>
 
   <div class="tabs" id="tabBar">
     <div class="tab active" data-tab="tab-cf" onclick="switchTab(this)">詳細CF比較</div>
@@ -742,17 +762,42 @@ function renderResults(methods,p){
   document.getElementById('resultBanner').innerHTML=
     `<h2>${vname}</h2><div class="cond">法人税率 ${(p.taxRate*100).toFixed(0)}%｜個人税率 ${(p.pTaxRate*100).toFixed(0)}%｜業務使用 ${(p.biz*100).toFixed(0)}%｜比較期間 ${years}年｜取得総額 ${fmt(n('v-total'))}</div>`;
 
-  // KPI
-  const ordinals=['1st','2nd','3rd','4th','5th'];
-  const badgeColors=['var(--green)','var(--blue)','var(--amber)','var(--purple)','var(--red)'];
-  document.getElementById('kpiStrip').innerHTML=methods.map((m,i)=>`
-    <div class="kpi-card">
-      <div class="top-bar" style="background:${m.color}"></div>
-      <span class="badge" style="background:${badgeColors[i]}">${ordinals[i]}</span>
-      <div class="mname">${m.label}</div>
-      <div class="val mono">${fmt(m.net)}</div>
-      <div class="sub">${fmtM(m.net/p.nm)} ｜ ${m.isPersonal?'必要経費控除':'節税'} ${fmt(m.tax)}</div>
-    </div>`).join('');
+  // Summary cards with calculation waterfall
+  const ordinals=['1st','2nd','3rd','4th','5th','6th','7th'];
+  const badgeColors=['var(--green)','var(--blue)','var(--amber)','var(--purple)','var(--red)','var(--ink3)','var(--ink3)'];
+  const bestNet=Math.min(...methods.map(m=>m.net));
+
+  document.getElementById('summaryGrid').innerHTML=methods.map((m,i)=>{
+    // Raw maintenance (before ecoRunning subtraction)
+    const maintRaw=m.ins5+m.fuel5+m.shakenAdj+(m.repairAdj||0);
+    // Vehicle/lease base cost
+    const baseCost=m.id==='lease'?m.totalPay:p.total;
+    // Total outflow = base + interest + raw maintenance
+    const totalOutflow=baseCost+m.interest+maintRaw;
+
+    return `
+    <div class="summary-card">
+      <div class="sc-top" style="background:${m.color}"></div>
+      <div class="sc-head">
+        <span class="sc-name" style="color:${m.color}">${m.label}</span>
+        <span class="sc-badge" style="background:${badgeColors[i]}">${ordinals[i]}</span>
+      </div>
+      <div class="sc-body">
+        <div class="sc-row sc-plus"><span class="sc-label">＋ ${m.id==='lease'?'リース料合計':'車両取得額'}</span><span class="sc-val">${fmt(baseCost)}</span></div>
+        ${m.interest>0?`<div class="sc-row sc-plus"><span class="sc-label">＋ 金利・手数料</span><span class="sc-val">${fmt(m.interest)}</span></div>`:''}
+        <div class="sc-row sc-plus"><span class="sc-label">＋ 維持費（${years}年）</span><span class="sc-val">${fmt(maintRaw)}</span></div>
+        <div class="sc-subtotal"><span>総支払額</span><span class="sc-val">${fmt(totalOutflow)}</span></div>
+        <hr class="sc-divider">
+        ${m.ecoRunning>0?`<div class="sc-row sc-minus"><span class="sc-label">− エコ維持費軽減</span><span class="sc-val">−${fmt(m.ecoRunning)}</span></div>`:''}
+        ${m.ecoSubsidy>0?`<div class="sc-row sc-minus"><span class="sc-label">− 補助金（CEV等）</span><span class="sc-val">−${fmt(m.ecoSubsidy)}</span></div>`:''}
+        ${m.tax>0?`<div class="sc-row sc-minus"><span class="sc-label">− ${m.isPersonal?'必要経費控除':'節税効果'}</span><span class="sc-val">−${fmt(m.tax)}</span></div>`:''}
+        ${m.sale>0?`<div class="sc-row sc-minus"><span class="sc-label">− 売却収入</span><span class="sc-val">−${fmt(m.sale)}</span></div>`:''}
+      </div>
+      <div class="sc-total${m.net===bestNet?' sc-best':''}">
+        <span>✦ 実質コスト</span><span class="sc-val">${fmt(m.net)}</span>
+      </div>
+      <div class="sc-monthly">${m.monthly>0?fmtM(m.monthly):'一括払い'} ｜ 月あたり ${fmtM(m.net/p.nm)}</div>
+    </div>`}).join('');
 
   // CF Table
   renderCFTable(methods,p);
@@ -1058,7 +1103,7 @@ function exportPDF(){
       </div>
       <div style="margin-top:30px;">
         <div style="font-size:13px;font-weight:700;color:${accentColor};margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid ${accentColor};">ランキング・サマリー</div>
-        ${document.getElementById('kpiStrip').outerHTML}
+        ${document.getElementById('summaryGrid').outerHTML}
       </div>
     </div>
   `;
@@ -1107,7 +1152,7 @@ function exportPDF(){
     image:{type:'jpeg',quality:0.95},
     html2canvas:{scale:2,useCORS:true,backgroundColor:bgColor,width:wrapper.scrollWidth},
     jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
-    pagebreak:{mode:['css'],before:[], avoid:['.kpi-card','.bar-item','.compass-card','tr']}
+    pagebreak:{mode:['css'],before:[], avoid:['.summary-card','.bar-item','.compass-card','tr']}
   };
 
   html2pdf().set(opt).from(wrapper).save().then(()=>{
