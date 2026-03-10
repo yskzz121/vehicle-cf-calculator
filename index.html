@@ -426,6 +426,8 @@ function dbApply(){
   document.getElementById('v-name').value=`${car.maker} ${car.model} ${car.grade}`;
   document.getElementById('v-price').value=car.price;
   document.getElementById('v-misc').value=car.misc;
+  document.getElementById('v-opt').value=0;
+  document.getElementById('v-pkg').value=0;
   autoCalcTotal();
 
   // insurance & fuel
@@ -452,14 +454,15 @@ function dbApply(){
   document.getElementById('eco-local').value=car.eco_local||0;
 
   // info card
-  const ecoTotal=(car.eco_cev||0)+(car.eco_weight||0)+(car.eco_perf||0)+(car.eco_green||0)*5+(car.eco_local||0);
+  const years=+document.getElementById('p-years').value||5;
+  const ecoTotal=(car.eco_cev||0)+(car.eco_weight||0)+(car.eco_perf||0)+(car.eco_green||0)*years+(car.eco_local||0);
   const info=document.getElementById('db-info');
   info.innerHTML=`
     <b>${car.maker} ${car.model} ${car.grade}</b><br>
     本体価格: <b>${(car.price/10000).toFixed(0)}万円</b>｜
     燃料: ${car.fuel_type}｜燃費: ${car.fuel_efficiency}${car.fuel_type==='EV'?'km/kWh':'km/L'}｜
     5年残価率: ${(car.residual_ratio_5yr*100).toFixed(0)}%<br>
-    ${ecoTotal>0?`🌿 エコカー減税・補助金合計（5年）: <b style="color:var(--green)">${fmt(ecoTotal)}</b>｜CEV補助: ${fmt(car.eco_cev||0)}｜重量税軽減: ${fmt(car.eco_weight||0)}｜グリーン化: ${fmt((car.eco_green||0)*5)}`:'エコカー減税: 対象外'}
+    ${ecoTotal>0?`🌿 エコカー減税・補助金合計（${years}年）: <b style="color:var(--green)">${fmt(ecoTotal)}</b>｜CEV補助: ${fmt(car.eco_cev||0)}｜重量税軽減: ${fmt(car.eco_weight||0)}｜グリーン化: ${fmt((car.eco_green||0)*years)}`:'エコカー減税: 対象外'}
   `;
   info.style.display='block';
 }
@@ -608,14 +611,14 @@ function calculate(){
     const tp=mo*ln;
     const interest=tp-total;
     const maint=ins5+fuel5+shaken*0.5-ecoRunning;
-    const deduct=tp+maint*biz;
+    const deduct=tp*biz+maint*biz;
     const tax=deduct*taxRate;
     const gross=tp+maint-ecoSubsidy;
     const net=gross-tax;
     methods.push({id:'lease',label:labels.lease,color:colors.lease,monthly:mo,totalPay:tp,interest,
       ins5,fuel5,shakenAdj:shaken*0.5,repairAdj:0,maint,depr80:0,deduct,tax,gross,net,sale:0,
       ecoSubsidy,ecoRunning,
-      deductDetail:{depr:0,intBiz:0,maintBiz:maint*biz,leasePay:tp}});
+      deductDetail:{depr:0,intBiz:0,maintBiz:maint*biz,leasePay:tp*biz}});
   }
   if(activeMethods.has('loan')){
     const down=n('loan-down'), rate=n('loan-rate')/100, ln2=+v('loan-n');
@@ -903,6 +906,18 @@ function resetAll(){
     el.value=el.defaultValue;
     el.nextElementSibling.textContent=el.defaultValue+(id==='p-years'?'年':'%');
   });
+  // reset method toggles
+  document.querySelectorAll('.method-toggle input[type=checkbox]').forEach(cb=>{cb.checked=true;});
+  // reset method params
+  document.querySelectorAll('#step3 input[type=text],#step3 input[type=number]').forEach(el=>{
+    if(el.defaultValue) el.value=el.defaultValue;
+    else el.value='';
+  });
+  // reset DB selection
+  const dbMaker=document.getElementById('db-maker');
+  if(dbMaker){dbMaker.value='';document.getElementById('db-model').innerHTML='<option value="">-- モデル --</option>';document.getElementById('db-grade').innerHTML='<option value="">-- グレード --</option>';}
+  const dbInfo=document.getElementById('db-info');
+  if(dbInfo){dbInfo.style.display='none';dbInfo.innerHTML='';}
 }
 
 /* ===== PDF ===== */
