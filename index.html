@@ -937,10 +937,10 @@ function renderResults(methods,p){
         <div class="sc-row sc-plus"><span class="sc-label">＋ 維持費（${years}年）</span><span class="sc-val">${fmt(maintRaw)}</span></div>
         <div class="sc-subtotal"><span>総支払額</span><span class="sc-val">${fmt(totalOutflow)}</span></div>
         <hr class="sc-divider">
-        ${m.ecoRunning>0?`<div class="sc-row sc-minus"><span class="sc-label">− エコ維持費軽減</span><span class="sc-val">−${fmt(m.ecoRunning)}</span></div>`:''}
-        ${m.ecoSubsidy>0?`<div class="sc-row sc-minus"><span class="sc-label">− 補助金（CEV等）</span><span class="sc-val">−${fmt(m.ecoSubsidy)}</span></div>`:''}
-        ${m.tax>0?`<div class="sc-row sc-minus"><span class="sc-label">− ${m.isPersonal?'必要経費控除':'節税効果'}</span><span class="sc-val">−${fmt(m.tax)}</span></div>`:''}
-        ${m.sale>0?`<div class="sc-row sc-minus"><span class="sc-label">− 売却収入</span><span class="sc-val">−${fmt(m.sale)}</span></div>`:''}
+        ${m.ecoRunning>0?`<div class="sc-row sc-minus"><span class="sc-label">− エコ維持費軽減</span><span class="sc-val">${fmt(m.ecoRunning)}</span></div>`:''}
+        ${m.ecoSubsidy>0?`<div class="sc-row sc-minus"><span class="sc-label">− 補助金（CEV等）</span><span class="sc-val">${fmt(m.ecoSubsidy)}</span></div>`:''}
+        ${m.tax>0?`<div class="sc-row sc-minus"><span class="sc-label">− ${m.isPersonal?'必要経費控除':'節税効果'}</span><span class="sc-val">${fmt(m.tax)}</span></div>`:''}
+        ${m.sale>0?`<div class="sc-row sc-minus"><span class="sc-label">− 売却収入</span><span class="sc-val">${fmt(m.sale)}</span></div>`:''}
       </div>
       <div class="sc-total${m.net===bestNet?' sc-best':''}">
         <span>✦ 実質コスト</span><span class="sc-val">${fmt(m.net)}</span>
