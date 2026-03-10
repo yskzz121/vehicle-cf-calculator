@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle CF Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FDFAF6;--bg2:#F5F0E8;--bg3:#EDE7DF;--surface:#FFFFFF;
+  --ink:#1A1410;--ink2:#3D3028;--ink3:#7A6858;--ink4:#B0A090;
+  --rule:#D8CFC4;--rule2:#EDE7DF;--accent:#C0550A;
+  --green:#1E6B35;--red:#B52A1C;--amber:#946800;--blue:#154E82;--purple:#5C1E8A;
+  --cash-c:#1E6B35;--bank-c:#946800;--resi-c:#5C1E8A;--lease-c:#B52A1C;--loan-c:#154E82;
+  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.dark{
+  --bg:#0E0A06;--bg2:#16100A;--bg3:#1E150D;--surface:#251A10;
+  --ink:#F0E8DC;--ink2:#C8B89A;--ink3:#7A6050;--ink4:#4A3828;
+  --rule:rgba(245,150,26,.18);--rule2:rgba(245,150,26,.08);--accent:#E8620A;
+  --green:#39FF14;--red:#FF3B2A;--amber:#F5C518;--blue:#00C8FF;--purple:#C060FF;
+  --cash-c:#39FF14;--bank-c:#F5C518;--resi-c:#C060FF;--lease-c:#FF3B2A;--loan-c:#00C8FF;
+}
+html{font-size:14px}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;transition:background .3s,color .3s}
+h1,h2,h3{font-family:'Lora',serif;font-weight:700}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* Layout */
+.container{max-width:1100px;margin:0 auto;padding:0 16px 60px}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--rule);margin-bottom:24px;flex-wrap:wrap;gap:10px}
+header h1{font-size:1.5rem;color:var(--accent);letter-spacing:.5px}
+header .sub{font-size:.82rem;color:var(--ink3);margin-top:2px}
+.hdr-btns{display:flex;gap:8px}
+.hdr-btns button{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:6px 14px;cursor:pointer;font-size:.82rem;color:var(--ink2);transition:all .2s}
+.hdr-btns button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Steps */
+.step{background:var(--surface);border:1px solid var(--rule2);border-radius:var(--radius);padding:20px 24px;margin-bottom:18px;box-shadow:var(--shadow)}
+.step-title{font-size:1.05rem;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.step-title span{font-family:'JetBrains Mono',monospace;font-size:.75rem;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px}
+
+/* Form grid */
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.fg.wide{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:.78rem;color:var(--ink3);font-weight:500}
+.field input,.field select{border:1px solid var(--rule);border-radius:6px;padding:7px 10px;background:var(--bg);color:var(--ink);font-size:.9rem;font-family:'JetBrains Mono',monospace}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(192,85,10,.15)}
+
+/* Slider */
+.slider-wrap{display:flex;align-items:center;gap:8px}
+.slider-wrap input[type=range]{flex:1;accent-color:var(--accent);height:6px}
+.slider-val{font-family:'JetBrains Mono',monospace;font-size:.85rem;min-width:50px;text-align:right;color:var(--accent);font-weight:600}
+
+/* Toggle */
+.toggles{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tog{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:2px solid var(--rule);cursor:pointer;font-size:.82rem;font-weight:500;transition:all .2s;user-select:none}
+.tog.on{border-color:var(--accent);background:var(--accent);color:#fff}
+.tog .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Method params */
+.method-params{display:none;border:1px solid var(--rule2);border-radius:8px;padding:14px 18px;margin-bottom:10px;background:var(--bg)}
+.method-params.show{display:block}
+.method-params h4{font-size:.85rem;margin-bottom:10px;color:var(--ink2)}
+
+/* Action buttons */
+.actions{display:flex;gap:10px;justify-content:center;margin:20px 0}
+.btn{padding:10px 28px;border-radius:8px;border:none;cursor:pointer;font-size:.92rem;font-weight:600;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-secondary{background:var(--bg2);color:var(--ink2);border:1px solid var(--rule)}
+
+/* Results */
+#results{display:none}
+.result-banner{background:linear-gradient(135deg,var(--surface),var(--bg2));border:1px solid var(--rule2);border-radius:var(--radius);padding:18px 24px;margin-bottom:18px;text-align:center}
+.result-banner h2{font-size:1.3rem;margin-bottom:4px}
+.result-banner .cond{font-size:.78rem;color:var(--ink3)}
+
+/* KPI Strip */
+.kpi-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:18px}
+.kpi-card{flex:0 0 auto;min-width:180px;background:var(--surface);border:1px solid var(--rule2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);position:relative}
+.kpi-card .top-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.kpi-card .badge{font-size:.7rem;font-weight:700;color:#fff;padding:2px 8px;border-radius:10px;display:inline-block;margin-bottom:6px}
+.kpi-card .mname{font-size:.82rem;font-weight:600;margin-bottom:8px}
+.kpi-card .val{font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;margin-bottom:2px}
+.kpi-card .sub{font-size:.72rem;color:var(--ink3)}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--rule2);margin-bottom:0}
+.tab{padding:10px 20px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--ink3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none;background:var(--surface);border:1px solid var(--rule2);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:20px;overflow-x:auto}
+.tab-content.active{display:block}
+
+/* CF Table */
+.cf-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.cf-table th,.cf-table td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--rule2)}
+.cf-table th{text-align:left;font-weight:600;color:var(--ink2)}
+.cf-table th:first-child{min-width:180px}
+.cf-table .section-row td,.cf-table .section-row th{background:var(--bg2);font-weight:700;font-size:.78rem;color:var(--ink3);letter-spacing:.5px;padding:5px 12px}
+.cf-table .total-row td{font-weight:700;font-size:.95rem;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);background:var(--bg)}
+.cf-table .bv{color:var(--green);font-weight:700}
+.cf-table .wv{color:var(--red);font-weight:700}
+.cf-table .nc{display:block;font-size:.7rem;color:var(--ink4);font-weight:400}
+.cf-table td{font-family:'JetBrains Mono',monospace;font-size:.82rem}
+
+/* Bar charts */
+.bar-chart{margin-bottom:24px}
+.bar-chart h3{font-size:.92rem;margin-bottom:12px}
+.bar-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-label{min-width:120px;font-size:.8rem;font-weight:500;text-align:right}
+.bar-track{flex:1;height:28px;background:var(--bg2);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#fff;font-weight:600;transition:width .5s}
+.bar-val{min-width:100px;font-family:'JetBrains Mono',monospace;font-size:.8rem;text-align:left}
+
+/* Non-financial table */
+.nf-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.nf-table th,.nf-table td{padding:8px 12px;text-align:center;border-bottom:1px solid var(--rule2)}
+.nf-table th:first-child,.nf-table td:first-child{text-align:left}
+.tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.75rem;font-weight:600}
+.tag-good{background:rgba(30,107,53,.12);color:var(--green)}
+.tag-mid{background:rgba(148,104,0,.12);color:var(--amber)}
+.tag-bad{background:rgba(181,42,28,.12);color:var(--red)}
+.dark .tag-good{background:rgba(57,255,20,.12)}
+.dark .tag-mid{background:rgba(245,197,24,.12)}
+.dark .tag-bad{background:rgba(255,59,42,.12)}
+.stars{color:var(--amber);font-size:.9rem;letter-spacing:1px}
+
+/* Compass */
+.compass-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:18px}
+.compass-card{background:var(--bg);border:1px solid var(--rule2);border-radius:8px;padding:16px}
+.compass-card h4{font-size:.85rem;margin-bottom:6px;color:var(--accent)}
+.compass-card .rec{font-size:1rem;font-weight:700;margin-bottom:4px}
+.compass-card .reason{font-size:.78rem;color:var(--ink3)}
+.notice-box{background:var(--bg2);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:14px 18px;font-size:.8rem;color:var(--ink2);line-height:1.8}
+
+/* Footer */
+footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size:.72rem;color:var(--ink4);line-height:1.8;text-align:center}
+
+@media(max-width:700px){
+  .fg{grid-template-columns:1fr}
+  .kpi-strip{flex-direction:column}
+  .kpi-card{min-width:auto}
+  header{flex-direction:column;align-items:flex-start}
+  .compass-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<header>
+  <div style="display:flex;align-items:center;gap:14px">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWcAAACVCAYAAACElTsrAAAACXBIWXMAACE3AAAhNwEzWJ96AAAZK0lEQVR42u2dW2wb15nH/+O6RWNZIhWY1KPYh1Zy7MDMQ7FYCStNtvcuWtNN0zpOuhr33m0b0ymCpptkNWo3FztpTLXNbrs3jdrmsmliUy2abbcXU1pIi0UfQiGOJWcfQgEbGBKNmEPFSZC05j7Moc0ossSZOWc4JP8/gA9NrZkzw+FvvvnmfN/RKpUK2o3l916bAJAGoAPYU/N/zQPIArB6/vBsAYQQ0iC0dpLz8nuvjQoppwFENvinNoAMgEzPH54t8TIhhFDO6sRsADAB9Lr4syUA6Z4/PJvlpUIIoZxlSvnPrtWFlId9bGYaQLrnf57N85IhhFDO/qQchZOaGJG42UkhaaY6CCGUs2sx//m1JjbPK3vFBpDp+e9nTV4+hBDKuR4pD16bEtFybwC7WwJg9Mw+m+NlRAihnNeV8u6kkPJwA3Y/7Uj6VIGXEyGEcgaw/Be7o3Be9h0KwXDGAZg9/3WK+WhCSPvKeXl4d1qIORKiYdkAzJ7pUxleWoSQtpLz8vBuHYCFYPLKXpkHkO6ZPpXjJUYIaWk5L1+/OyGkLDuvbAPIA0gqiMKnAKR7TjIfTQhpMTkv/+Xuasn1qORNO9V/vz+VrdmXAfdVhPUwBiDT83vmowkhLSDn5fftNuDMwpAZ0V7um/G7t8py+X1KbwZmz+9OWbzsCCFNKefl9+3ShUD3SN70pCPI5wp1jCEhxrBX8himxRhyvPwIIU0h5+X370qItMKI5E07L+h+616Iy+9XfKP47eY3CkII5dwYKX9gd72tPN1iA0j3/MZ/KmH5A+pSLD2/OWXyUiSEhErOQnomVL2E+428l3DiJmJCftHLkriJsDUpIaSxcl7+4C5VJdfO9LX/VJcuWP7grgTUTOubFmNna1JCKOdg5bzyoV0qWnlWo08j/uvgXrStfGiXDjUFMZMA0vFfP8epd4RQzoHIzISavLIZ//VzDSuZXvnQLhWl5A0/LkJIi8t55cO7VLXyHAdgxn/V+Ahz5cOKnwh+xal3hFDOsoT1EaW5WSP+H+GbhrbyEWW59NAeMyGkSeS88tFdSmc1xJ9+Lit5vEkAOgAr/rScKHzlo4qfFp5mPpoQytmdlFTlXzPxp58zFdxIEnAaH0WE/M34089ZErdvQtH8bZnjJIS0qJxX/uoaHSpnLvzytJJIUYz75DopBDP+y9M5SftIQGHlo6xxEkJaSM5CPMp6UKgWzxXkrOTGIPZlQtHc7vgvTxd4SRPS5nJe+dg1Sru3xX9xOpBH9pWPbSjnagohE//FaVPiPg0o7LYX/8Vp5qMJaUc5r3xcsVx+HpxcVj6+qZxrbxrp+M9PZyXtV+3N7efB3NwIISGQ88pexY/lU8E/lotjOuniT6bFWPOS9p+AyrTQFPPRhLSsnIVATKh6oSVJICt7rzEApAAY8an6om8Pcq4yLuRXkjR2Hepak6ZljZMQEgI5r6SuUdrKM56V8+i9knrLTJGpePZ0ysXfnvRxHGY8e1paifVK6hp1UxGz8vLmhJAGyXll305VRRRjADLxEwu+I7mVfTsTWL8CcTp+YkGvcxt+5FzFKbE+sSDnCWDfTrVFPCcW2JqUkGaT88q+nWrLj08sFCTJa6OXaUHLucqUkF9BxsY2uPnI+C7S8RMLbE1KSDPIufiJnQaACQXRmhE7LieqFGPcbKbIdOx4fXIufkKqnN/0dBA7vlCSdMw61BT4HIwdX7D4MyAkfGy5JIAbdhrQMAENkPSxoeFw7PhCQpqYb9hpiTFGNt1/3bcnJZ9RaCgUb9hpyDju2PGFXOz4QgIaxsR5lTXOCVljJIQokHPxhn4dqEwAFUj6jAOVROypBWkvyoo39CeBykj9Y6iXiqpPBKhMFG/ozzvnV4Kkn1owgUoCqExKHOeEc24JIeGLnDWYkiKxaWi4LvbUYjr21KLcqVsaoq7G0tjIufazBxpOFj/ZbxU/2Z/wL+jFUuypRQMarhPnW8YY2dCfkLDJuXhjfxIahn3+uJegYV/syUU99uSimpdMbscUHjlXPyPQkC/e2G8Wb+yP+pb0k4v52JOLOjQcFOffz9iGizcyeiYkXJGzBsNnXnks9rPFROxni2qnZzW/nCFy5aPQkC9+qt+Qkur42aIFDUkJ+egUfw6EhCut4TVimgSQjD2xaPI0uqYXwETxU/254qf8R6yxJxZL4ntIiu/FCzq/FkLCFTl7yStfH3ti0Yg9sVgIbKThiJxtybMlhqHhmeKn+63ipyWkOp5YLMSeWDSg4XpomFd2zgghytnq8kc5Fnu8QZGyFort5uH07pC9kOsIgFRxf39GxvmN/ftiDkCyuL8/A/lVhqRNGRociK550q4+beWq/2Fmdi7HMyVLzi6mncUePyNFzMX9fdVHcCP2+Jk6Z3WoWojW3XbFeI3i/j4Lcjv0RQCMFvf3GeK8+L7IY48vpov7+w61mCAy8JaKs2Zm56wGjbladeuW/MzsXLqB5zopghFdnPMrFX6N1vwN4DQ0ywPIzszOZUN6HRkAjBBf6vmtQT7OFm/qc6JO7VKlmyW+/GaJnGslnQOgF2/qM4SkZVXv9QI4WbypbxqAEXvsTCGUTxyNw8/NxmrQmFMeb+LDcNoUBB0dG2K/Xq/pPeIzMjQ4YIvznpmZnSuE6DoyIL8tgkyGtwSRkywe6EsUD/TloOEENPTWbDPqSjJhmK2xVtKPnZE1W2K9fPQLxQN9meKBPu/5aOacSf1iTgMoADgmMdiIiBvqC0ODA6aQP6mDLUoj5QN90eKBvgyAF0J+l/KXPnj0TCn26JlqqmZKQaRYKB7oS/NyJYqknBgaHMgLKUcU7moUQF6kS8imclYUWRVv7ktDQwEaDoUhwg1iu7FHzxRij55JeZ4tsfH86GPFm/vyxZv7dEbORKKYdTj54T0B7bIXwDMi50uClnPxlr4cNBxraIOiBm439siZXOyRM0lRvWdLLwW/pc+inIkEMafgdGSMNGD3ExR0wGmN4i19eiunMFylO356xgKQgNNCVCYjxVv6+GhI/Ig5ica9IK0VNK/jK7BV0+ROUZO9vWbdbo2gSwDMc595jwW5jfOjYTg+0rRYDYqY1xsHBR1IWqOJ0g9Kt7uGHT95vrDjJ8/rIh+9JCXNwbQG8RY1mwgux7wZe5jeCCitQTaR9I+fz+348fMJAIfhLLxKSND4nfljw1nqrPqZ97k9k1/JOmkN6RFTyIpFGrbdzSWdOTfyHgtqFnJt+PGR0EbNKR/pjCUA5nqVlkODAwkhfS/Xcu/Q4EByZnYuyDUtSyH/quytkJ2TVJXjbLbt1iPoyedLANLnjHdbULOobkOPj4QSr61hJwGkZ2bn1pWaqP5Li/nSXtYh1eFM6QsKA+5y3VH4y9Mfdnl8BUbOIYgsd1j/mwegnzv47gJkL+LKyJm8GS8v35Y2EvMaSVsiih51uY9AKwfFseRcPnXkPQZQ0zOzc657qzDnHC4KPAVEMV5eBGbrEXMNXpo86fxq1sqZszXCM6OBszVIOHGVnxUin+dp8wdzzmHKyaoYC3POxD8JD3/jNk3Bp0amNQghLkm56SYncs5u351QzkxrMK3BtEZbs+ThbyJwNzfa8LCPHL+at8i5gro/9T5Gy95mM27Xawqikd8HaQe8TldLi4h4s6g5CfczNWwub8W0BiHtjlcJRgBkNxGz7nH7WX4t68hZ04B6P3UFapq7T91BZZNt11PgrGAsYTk2EhosH3+7Z2hwwLqCmNPw3n7U5NeybloDzDkz58ycc5sgprlN+tjESK2gxSoqOTirqHhhLGRrC4aGrfJXtQ7HKtmN325YxsJcMlk3Uh3xKWjAmWGRhveS5vmZ2TlGzYycGTkzciYiei4AGPe5mRE4L/68itkGqwIpZ8qZcibrRs+NallrA9BdloS3o5wvou5PXTK4COnbbMbtepKzgrGE5dhI2KLnErx3qPPDkhBznt/CZnImhLSroHMS0htumAeQpJgpZ0LI5oJOw1nNRDXjM7NzSaYyKGdCSP2koK6LnA1gn7gJEBewKx270pE2RpRkm1Cz4OsUAIPRsmc5y5aBKnE12XbDMhbOwiDrSzkKtetXTs/MzqV4pr3D8m2Wb7N8u/3EbMApIDmkcDfDVyr1JvVGzoSQdoqWs1CxkPD6jAwNDmBmds7wON4MnDUPrfVW/G6DtAZzzuFJazDnTJSJOQV/q0cHJmhxE8nhch58WGyjrQTNCkFWCLJCsPXFnAZwogFirhW0VedYdTgpl7UvKCdEOoZyppwpZ9ISYrbgvWNcoIIeGhwwsXHb0bYSNFdC4UooXAmltcU8ImFTNuT04VhX0EODA9GhwYEs6ltBpW0EzciZkTMj59YUsylJzONwVt/WJQrarBlnEs7SWXtdbKMtBM0XgnwhSFpPzDrcr+O3liU4BSQ58b/zNctQ+c1djw4NDhSqovW4jYlWf0nIyJmRMyNn9SQDFHMU/paiApzKvuTaRVdFwyJZEfSEDzHXCjrRsnKmm+nmNnFzsoH7jga4rzSAXh9/f3hmdi51pZJryYL2i93KS1w1zQvB7gf/LwetMs0Xgnwh6JEI2gPDx98enJmdy2z2j0Ii6Hm0+EoqzZPWAND9wIs6NByEhiWGzgydyVtSGikfUfO4m/xtgwU9iTZo2N9UcgaA7qMvWtCQhIYxyplydimvRqU2giqX9np8NpwmSK5okKAPzszOtUWnu+ZZpqpW0EdeLHUfedGEdvFd0C5OcZkqSdtsfQJ/DA74huD1+LJeZRegoJcAXNdOJdxNFzm/SdL3ny103382BQ3XQ8N8zXbrv9AYObdTWqMRLSyNJjgvBT9/HICgp9GGy1s1tZwvSfq+s7nu+84mRT56CpqLHwTl3Gxy9rNix7CYqxtU1JxoEjn7RqGgx2Zm59pype7mKd+uR9L3nrW67z2b6r73rIvImbM1mmy2ht8faTaIVENNe85mmCUi5XwIQcu8GU3OzM6ZaFO2tEDgHLpglYGzUvw+2kYA5FRG0CJizsH/0k/zAZ3TvTJuWKL7nSVxXCPt1omuZSPn0ESrjJzDLOeqoE8ODQ5YMqPoocGBhGgQn4ecNflyAZ4bS0T7Xo47OTQ4kIPT/U72k8JEuwq60WsIJkt395jR7yw37tGFawg2G1n4L/u9FJmJ6MwWYsuLtElViqW1L6FEVJyoSQdE4eRaE/BXmSdDzjl4X3pqD5z+Gcbasu2NpAynInFE8XcuvY+GuBG5uTG7/fe1DIunCjc3z3yj5RwBMFr6ux4DQDr67eUs5Uw5b8TM7FxpaHBgCu66mNVzHQ7j8nzk0ZofcaMOdWlmds7t7yEH54Wc1+i1VzxRTMKZXpddR2q6kJQBNSt2ByVoS/I1tBlue2rPh6UrXS+AE6XR+DSAdHRsJbgpM+xK14xkAv5hNQLXT5PixpWVEMlWnygAZ35xQdGTQSMFHQ3597+n8VPp3vwZhoZnSmY8UzLjwZw8vhFsujeC4rF7qoXFvORDQGnInc7WK54oekNybtqo2X44OQSgUDLjaRASjITChGf5iPnArf67aQtBN362xpU/EWiVY6WxWKE0FtOVphI4W6Pp0h+iVWQr/kDH6n0ht8G5seA0BwojsqYHtrygt2gaUO+nrkTOaDGnaVhys91NPr2ahpP2t2NZ+9uxhHQfuhyPUjfXP4756GgxJ/v4mg3xwupgC/0epRVdzMzOGSETtA2nV3RS4nfW0oLeoqiD/eZd49x/9kLDC/Z3Yqb9nZi8fHRz5ZxtcV51JcfXhIgosRUEPS6EKvPchEXQ1d4YGQXfWcsKeouKx97I3cVS5O6iCa3yLmiVKYmpDkCrjEKrFOy/3yHnC2metMYUtEoycnfRjNxdVFOe3qSIH/t1CK6iTiZLAPbNzM6lFZ0bQ4jQbuCx6WtXLKGgGxU5VyV917lC5K5z1a5xSxKj6Ag0TNj37Mjb9+zQfZ2B8EfO89BwfeSuc6nIXecKSo+viZmZncvXPDI3g6SXAIyJiDKr+NxYcOYmTwV4bAdnZucSGx0bBb0xW4PYSeTOczkACfueHWk48zdllXjuAXDSvmfHJAAzcqcHeYWL0pocXTpy5zkLxK2IqmXZKTjVe8MhGd48nEKRnGohr3NeCgBSoojEgJqqvkkAlpsXmjOzc5aYTy2j6nNiaHCg4PeFanjkHGCT9cid5zL2vVdbQtCHJG56BEDKvvfqDIBM5G9fcvHYH6Im89pFA07lUt71cTTD8QUcSaOmXFbIulpqXaX639ZjM6HP48od8mrlkIdTBp4LyXnJwWn8lBaS1sXHS8A0LY6vesPx2rDfGhocqE4B9HMjtXG5tH4z8iG6aa97o9NK93bnXAzyYORbL0mJ5Oz7rk4IEck+QUsAzHrHad93tQ7gZL0XY+RbL+loEuz7rk6j/rLRpjo2IpeaniEb3bCqvUcKrbzqdYgiZ1cvgibs+7t1AGbkjvO+vpzIt14qANDt+7tTcMpxZVUg9YpxGgDSkTvOb1wK3oLlzfb93QkAGWgtX+JM5KY9CnDfbIkoYouHeccjmoZ8+Ui3WT7S7XtKW+SO89nIHecTmoYxTYMtcX70sKbhmfKRbmujcYZpnrNfyke6o+Uj3aamIa9p2NtKx0ZI28kZ3nrARuB07sqXj3RLWZet65vnTfFYJXte5giAQvlIt9nKX2T5SLchvstReMsf5vlzICRMctYqOR9zjnuhVU6Uj0Zz5aNR303Lu755vtT1zfMGtMp10CrTkkvBR8tHo4Xy0WjqLWmNJp4LXD4a1ctHozlolQnxfXg9R1n+HAgJD1qlUkH5gWgBcnK+kwDSXbeXpCzGWH4gasCZ2SG7I9Y0AKPr9lKh/EBUh4sXgl23l/RQSPmBaBROrl7GlKilrttLCf4cCAlXWgPQkJZUHDICDYXyg1Ep1U5dt5esmlJwW2IRyzA0vFB+MJqBhmizFWqUH4ya0FAQ51vG+TD4UyAkhJEzAJS/G8lA7tzjJQBG1zfsnBQhfTeSEFH0SAPP13TXN+yGRc7l70Zkz2wBgPGub9hszUpIWOUMAOWHpAv6cgrhNrsgRVAPRXQhqD0NOF/TXbcFL+fyQ5EE1MwJH++6jWImJPRyFiJQEZ0BwDgAs+s2W04++qGIIcYZCfB8BSrn8kORKORXU15+qrlNzlMNISQAOVdZPdZlwimnlCk/G0C683DZkrGx1WNdUTHG0aDk3Hm4HIicV491ye5DUj3/mc7DZZOXPiFNKmcAWM10JaAmzzsPIN2ZLkuJ3MQ4VTz2v1XOabVyXs106eJYZD+5TIpzXuJlT0iTy/mSMMa7dCFp2fKbApDuPFQuSBHbuDKxXZbzITVyXh3vSkDNqtLT4hyzyISQVpPzJYF8r9OAmnnHYwAynbeuSonqVr/XqSIl4Mj51lWpcl79Xqeq1MwSALPz1lWLlzkhzYer1bc7b121FC1BNQoN+dXvdxoyDqrz1tUMNCSgYVzyODNSxfz9TkPMVx6VOMbqUlZJipmQNomc3yyWDpWP4Wbn1y/k5AiwIynGOexzTEbn1y8UJI1Jh5rpgJPi3BV4aRPSpnK+JJofKBVNuvNrF+SkOn7Q4WWK4BIAo/Nrkm4UP+hIQOULVknjJIS0gJwviefhDnVTv756wZSWSni4w8TmUwSl7nf14Y5qXlnN1MSvXmD6ghDK+cq8/A/bVBZNpLf/zStZieO8UtOgSbGvkqR9qSrqGQOQkTVOQkgLy/mSkP5xWwJq5h1PA0hv/8oreUnj1HF5iqDsbcvIdV/pHBjbv/JKgZcvIZSzN0H9cJsONfOOxwGY278cvqjx5R9uk9nKc+3Tg7H9y6/keNkSQjnLEdaPrjKhJt9qbv/Sq5mwnMx2OU5CSIvIWYhLbUT5pVcbFlG+/KOr1D4hfOlV5pUJoZwVi+yfrlKbi/3iq4UAjyUBlbn1L77KkmtCKOeAo81/fqfaWQxfeK2kcOxqZ6V84TWu50cI5dy4RUtf/pd3Kp3/u/3zr1kKxqxsPvf2z79m8pIkhDRczlUu/Os7E1BYOdfxuddyEsaoQ2ElZMfnXmNemRASLjlfFuA7VAlwyhHg6wUPY0pAYQ+Rjs+9nuNlSAgJtZwvCfHf3mFA/hJUtthmpuOzr5fqGIPSVp4dn33d4uVHCGkqOQPAhYm3q5XjwTesDfat9uZw8A2mMAghzSnnS6K03q4yrZDuMN7I1+xLh8IVXzqMNwq85AghLSHnNeK0oGZtPQuAAVUvJI03crzUCCEtKedLkp7cqmoJKpnYANIdI3+0eIkRQtpCzgBw4cdbVRWByGAcgNnx139kXpkQ0l5yrvLKT7YmoKZ82gvTAIxtn/ljgZcVIaSt5XxZ0m9TVQpeD0uOlP+U4+VECKGc15P0T99mQn4p+JWwAZjbbvkTW3kSQijnTQX9yNtUtSatZRJAetvNf2JemRBCObuT9BYVrUmnHSlfZCtPQgjl7EvSj24x4Mzs8JOPXgKQ3nbgIlt5EkIoZ2mCfmyL19akNoDMtpsumrxUCCGUsypJP64lUH8p+CQAc9v+SoGXCSGEcg6AVx/XdBFF710nUs4CsK7aX8nx8iCEUM6NE3USQBRA4SpGyYSQkPD/a8sxkPFnUoAAAAAASUVORK5CYII=" alt="U&I" style="height:40px">
+    <div>
+      <h1>Vehicle CF Calculator</h1>
+      <div class="sub">社用車 取得方法 比較分析 — U&I Consulting</div>
+    </div>
+  </div>
+  <div class="hdr-btns">
+    <button onclick="toggleTheme()" id="themeBtn">🌙 ダーク</button>
+    <button onclick="exportPDF()">⬇ PDF出力</button>
+  </div>
+</header>
+
+<!-- STEP 01 -->
+<div class="step" id="step1">
+  <div class="step-title"><span>Step 01</span> 車両選択</div>
+
+  <div class="fg">
+    <div class="field"><label>車両名称</label><input type="text" id="v-name" placeholder="例: Mercedes-Benz GLC 220d"></div>
+    <div class="field"><label>車両本体価格（円）</label><input type="number" id="v-price" value="" oninput="autoCalcTotal()"></div>
+    <div class="field"><label>諸費用・登録費（円）</label><input type="number" id="v-misc" value="290000" oninput="autoCalcTotal()"></div>
+    <div class="field"><label>オプション（円）</label><input type="number" id="v-opt" value="0" oninput="autoCalcTotal()"></div>
+    <div class="field"><label>メンテ保証パック（円）</label><input type="number" id="v-pkg" value="0" oninput="autoCalcTotal()"></div>
+    <div class="field"><label>取得総額（円）</label><input type="number" id="v-total" value="" class="mono" style="font-weight:700;color:var(--accent)"></div>
+  </div>
+</div>
+
+<!-- STEP 02 -->
+<div class="step" id="step2">
+  <div class="step-title"><span>Step 02</span> 共通パラメーター</div>
+
+  <div class="field" style="margin-bottom:12px">
+    <label>法人実効税率</label>
+    <div class="slider-wrap">
+      <input type="range" id="p-tax" min="15" max="40" value="25" oninput="this.nextElementSibling.textContent=this.value+'%'">
+      <span class="slider-val">25%</span>
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:12px">
+    <label>業務使用割合</label>
+    <div class="slider-wrap">
+      <input type="range" id="p-biz" min="50" max="100" value="80" oninput="this.nextElementSibling.textContent=this.value+'%'">
+      <span class="slider-val">80%</span>
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:14px">
+    <label>比較期間</label>
+    <div class="slider-wrap">
+      <input type="range" id="p-years" min="3" max="10" value="5" oninput="this.nextElementSibling.textContent=this.value+'年'">
+      <span class="slider-val">5年</span>
+    </div>
+  </div>
+
+  <div class="fg">
+    <div class="field"><label>任意保険料（円/年）</label><input type="number" id="p-ins" value="200000"></div>
+    <div class="field"><label>燃料費（円/年）</label><input type="number" id="p-fuel" value="144000"></div>
+    <div class="field"><label>車検・法定費用（期間合計）</label><input type="number" id="p-shaken" value="310000"></div>
+    <div class="field"><label>修繕積立（期間合計）</label><input type="number" id="p-repair" value="250000"></div>
+    <div class="field"><label>N年後売却想定額（円）</label><input type="number" id="p-sale" value="3900000"></div>
+  </div>
+
+  <!-- エコカー減税・補助金 -->
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule2)">
+    <div style="font-size:.88rem;font-weight:600;color:var(--green);margin-bottom:10px">🌿 エコカー減税・補助金</div>
+    <div style="font-size:.75rem;color:var(--ink3);margin-bottom:10px;line-height:1.7">
+      対象車両（EV・PHEV・HEV・クリーンディーゼル等）の場合、該当する項目を入力してください。<br>
+      ガソリン車・非対象車の場合はすべて0のままでOKです。
+    </div>
+    <div class="fg">
+      <div class="field">
+        <label>CEV補助金（円）</label>
+        <input type="number" id="eco-cev" value="0">
+        <span style="font-size:.68rem;color:var(--ink4)">EV最大85万/PHEV最大55万/FCV最大255万</span>
+      </div>
+      <div class="field">
+        <label>エコカー減税・重量税軽減（期間合計・円）</label>
+        <input type="number" id="eco-weight" value="0">
+        <span style="font-size:.68rem;color:var(--ink4)">免税〜50%軽減。EV:約3.7万〜7.5万免除</span>
+      </div>
+      <div class="field">
+        <label>環境性能割 軽減額（円）</label>
+        <input type="number" id="eco-perf" value="0">
+        <span style="font-size:.68rem;color:var(--ink4)">非課税〜3%。EV/PHEV:非課税（通常の税額分を入力）</span>
+      </div>
+      <div class="field">
+        <label>グリーン化特例・自動車税軽減（円/年）</label>
+        <input type="number" id="eco-green" value="0">
+        <span style="font-size:.68rem;color:var(--ink4)">翌年度約75%軽減。EV:年約2.7万軽減</span>
+      </div>
+      <div class="field">
+        <label>自治体独自補助金（円）</label>
+        <input type="number" id="eco-local" value="0">
+        <span style="font-size:.68rem;color:var(--ink4)">東京都EV:最大45万 等。自治体により異なる</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 03 -->
+<div class="step" id="step3">
+  <div class="step-title"><span>Step 03</span> 取得方法 選択・パラメーター</div>
+
+  <div class="toggles" id="toggles">
+    <div class="tog on" data-m="cash" onclick="toggleMethod(this)"><span class="dot" style="background:var(--cash-c)"></span>法人 現金一括</div>
+    <div class="tog on" data-m="bank" onclick="toggleMethod(this)"><span class="dot" style="background:var(--bank-c)"></span>法人 銀行借入</div>
+    <div class="tog" data-m="resi" onclick="toggleMethod(this)"><span class="dot" style="background:var(--resi-c)"></span>個人 残価ローン</div>
+    <div class="tog" data-m="lease" onclick="toggleMethod(this)"><span class="dot" style="background:var(--lease-c)"></span>法人 リース</div>
+    <div class="tog" data-m="loan" onclick="toggleMethod(this)"><span class="dot" style="background:var(--loan-c)"></span>法人 ローン</div>
+  </div>
+
+  <!-- cash params -->
+  <div class="method-params" id="mp-cash"><h4>法人 現金一括</h4><p style="font-size:.8rem;color:var(--ink3)">追加パラメーターなし</p></div>
+
+  <!-- bank params -->
+  <div class="method-params" id="mp-bank">
+    <h4>法人 銀行借入</h4>
+    <div class="field" style="margin-bottom:8px"><label>年利</label>
+      <div class="slider-wrap"><input type="range" id="bank-rate" min="0.5" max="8" step="0.1" value="2.5" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="slider-val">2.5%</span></div>
+    </div>
+    <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
+      <div class="slider-wrap"><input type="range" id="bank-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
+    </div>
+    <div class="field"><label>頭金（円）</label><input type="number" id="bank-down" value="0"></div>
+  </div>
+
+  <!-- resi params -->
+  <div class="method-params" id="mp-resi">
+    <h4>個人 残価ローン</h4>
+    <div class="field" style="margin-bottom:8px"><label>年利</label>
+      <div class="slider-wrap"><input type="range" id="resi-rate" min="0.5" max="8" step="0.01" value="2.49" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="slider-val">2.49%</span></div>
+    </div>
+    <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
+      <div class="slider-wrap"><input type="range" id="resi-n" min="12" max="84" step="1" value="59" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">59回</span></div>
+    </div>
+    <div class="field"><label>残価設定額（円）</label><input type="number" id="resi-z" value="5000000"></div>
+  </div>
+
+  <!-- lease params -->
+  <div class="method-params" id="mp-lease">
+    <h4>法人 リース</h4>
+    <div class="field" style="margin-bottom:8px"><label>想定金利</label>
+      <div class="slider-wrap"><input type="range" id="lease-rate" min="0.5" max="8" step="0.1" value="3.0" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="slider-val">3%</span></div>
+    </div>
+    <div class="field" style="margin-bottom:8px"><label>リース回数（月）</label>
+      <div class="slider-wrap"><input type="range" id="lease-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
+    </div>
+    <div class="field"><label>メンテ加算（円/月）</label><input type="number" id="lease-maint" value="0"></div>
+  </div>
+
+  <!-- loan params -->
+  <div class="method-params" id="mp-loan">
+    <h4>法人 ローン（残価なし）</h4>
+    <div class="field" style="margin-bottom:8px"><label>年利</label>
+      <div class="slider-wrap"><input type="range" id="loan-rate" min="0.5" max="8" step="0.1" value="2.0" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="slider-val">2%</span></div>
+    </div>
+    <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
+      <div class="slider-wrap"><input type="range" id="loan-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
+    </div>
+    <div class="field"><label>頭金（円）</label><input type="number" id="loan-down" value="0"></div>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions" id="actionBtns">
+  <button class="btn btn-secondary" onclick="resetAll()">リセット</button>
+  <button class="btn btn-primary" onclick="calculate()">▶ 比較分析を実行</button>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+  <div class="result-banner" id="resultBanner"></div>
+  <div class="kpi-strip" id="kpiStrip"></div>
+
+  <div class="tabs" id="tabBar">
+    <div class="tab active" data-tab="tab-cf" onclick="switchTab(this)">詳細CF比較</div>
+    <div class="tab" data-tab="tab-graph" onclick="switchTab(this)">グラフ</div>
+    <div class="tab" data-tab="tab-nf" onclick="switchTab(this)">非財務評価</div>
+    <div class="tab" data-tab="tab-compass" onclick="switchTab(this)">推奨コンパス</div>
+  </div>
+
+  <div class="tab-content active" id="tab-cf"></div>
+  <div class="tab-content" id="tab-graph"></div>
+  <div class="tab-content" id="tab-nf"></div>
+  <div class="tab-content" id="tab-compass"></div>
+
+  <footer id="footerText"></footer>
+</div>
+
+</div><!-- /container -->
+
+<script>
+/* ===== THEME ===== */
+function toggleTheme(){
+  document.body.classList.toggle('dark');
+  const d=document.body.classList.contains('dark');
+  document.getElementById('themeBtn').textContent=d?'☀ ライト':'🌙 ダーク';
+}
+
+/* ===== AUTO CALC TOTAL ===== */
+function autoCalcTotal(){
+  const p=+v('v-price')||0, m=+v('v-misc')||0, o=+v('v-opt')||0, k=+v('v-pkg')||0;
+  const t=p+m+o+k;
+  if(t>0) document.getElementById('v-total').value=t;
+}
+function v(id){return document.getElementById(id).value}
+function n(id){return parseFloat(document.getElementById(id).value)||0}
+
+/* ===== TOGGLE METHODS ===== */
+const activeMethods=new Set(['cash','bank']);
+function toggleMethod(el){
+  const m=el.dataset.m;
+  if(activeMethods.has(m)){
+    if(activeMethods.size<=1)return;
+    activeMethods.delete(m);
+    el.classList.remove('on');
+  }else{
+    activeMethods.add(m);
+    el.classList.add('on');
+  }
+  updateMethodPanels();
+}
+function updateMethodPanels(){
+  ['cash','bank','resi','lease','loan'].forEach(m=>{
+    const p=document.getElementById('mp-'+m);
+    p.classList.toggle('show',activeMethods.has(m));
+  });
+}
+updateMethodPanels();
+
+/* ===== PMT ===== */
+function pmt(annualRate,nm,pv){
+  if(annualRate===0)return pv/nm;
+  const r=annualRate/12;
+  return pv*r*Math.pow(1+r,nm)/(Math.pow(1+r,nm)-1);
+}
+
+/* ===== DEPRECIATION ===== */
+function calcDepr(total,biz){
+  let rem=total,s=0;
+  for(let i=0;i<3;i++){const d=rem*0.667;s+=d;rem-=d}
+  s+=rem-1;
+  return{deprSum:s,depr80:s*biz};
+}
+
+/* ===== FORMAT ===== */
+function fmt(x){
+  if(x==null)return '—';
+  const neg=x<0;
+  const abs=Math.abs(Math.round(x));
+  const s=abs.toLocaleString('ja-JP');
+  return (neg?'▲ ':'')+s+'円';
+}
+function fmtM(x){return Math.round(x).toLocaleString('ja-JP')+'円/月'}
+
+/* ===== CALCULATE ===== */
+function calculate(){
+  const total=n('v-total');
+  if(total<=0){alert('取得総額を入力してください');return}
+  if(activeMethods.size<1){alert('取得方法を1つ以上選択してください');return}
+
+  const taxRate=n('p-tax')/100;
+  const biz=n('p-biz')/100;
+  const years=n('p-years');
+  const nm=years*12;
+  const ins5=n('p-ins')/12*nm;
+  const fuel5=n('p-fuel')/12*nm;
+  const shaken=n('p-shaken');
+  const repair=n('p-repair');
+  const sale=n('p-sale');
+  const {deprSum,depr80}=calcDepr(total,biz);
+
+  // エコカー減税・補助金
+  const ecoCev=n('eco-cev');       // CEV補助金（取得コスト軽減）
+  const ecoWeight=n('eco-weight'); // 重量税軽減（車検費用から控除）
+  const ecoPerf=n('eco-perf');     // 環境性能割軽減（取得コスト軽減）
+  const ecoGreen=n('eco-green')/12*nm; // グリーン化特例（期間累計）
+  const ecoLocal=n('eco-local');   // 自治体補助金（取得コスト軽減）
+  const ecoSubsidy=ecoCev+ecoPerf+ecoLocal; // 取得時の補助金合計
+  const ecoRunning=ecoWeight+ecoGreen;       // 維持費軽減合計
+
+  const methods=[];
+  const labels={cash:'法人 現金一括',bank:'法人 銀行借入',resi:'個人 残価ローン',lease:'法人 リース',loan:'法人 ローン'};
+  const colors={cash:'var(--cash-c)',bank:'var(--bank-c)',resi:'var(--resi-c)',lease:'var(--lease-c)',loan:'var(--loan-c)'};
+
+  if(activeMethods.has('cash')){
+    const maint=ins5+fuel5+shaken+repair-ecoRunning;
+    const deduct=depr80+maint*biz;
+    const tax=deduct*taxRate;
+    const gross=total+maint-ecoSubsidy;
+    const net=gross-tax-sale;
+    methods.push({id:'cash',label:labels.cash,color:colors.cash,monthly:0,totalPay:0,interest:0,
+      ins5,fuel5,shakenAdj:shaken,repairAdj:repair,maint,depr80,deduct,tax,gross,net,sale,
+      ecoSubsidy,ecoRunning,
+      deductDetail:{depr:depr80,intBiz:0,maintBiz:maint*biz}});
+  }
+  if(activeMethods.has('bank')){
+    const down=n('bank-down'), rate=n('bank-rate')/100, bn=+v('bank-n');
+    const pr=total-down;
+    const mo=pmt(rate,bn,pr);
+    const tp=mo*bn+down;
+    const interest=tp-total;
+    const maint=ins5+fuel5+shaken+repair-ecoRunning;
+    const deduct=depr80+interest*biz+maint*biz;
+    const tax=deduct*taxRate;
+    const gross=total+maint+interest-ecoSubsidy;
+    const net=gross-tax-sale;
+    methods.push({id:'bank',label:labels.bank,color:colors.bank,monthly:mo,totalPay:tp,interest,
+      ins5,fuel5,shakenAdj:shaken,repairAdj:repair,maint,depr80,deduct,tax,gross,net,sale,
+      ecoSubsidy,ecoRunning,
+      deductDetail:{depr:depr80,intBiz:interest*biz,maintBiz:maint*biz}});
+  }
+  if(activeMethods.has('resi')){
+    const rate=n('resi-rate')/100, rn=+v('resi-n'), zv=n('resi-z');
+    const pr=total-zv;
+    const mo=pmt(rate,rn,pr);
+    const tp=mo*rn;
+    const interest=tp-pr;
+    const maint=ins5+fuel5+shaken*0.5+repair-ecoRunning;
+    const deduct=0;
+    const tax=0;
+    const gross=tp+maint-ecoSubsidy;
+    const net=gross;
+    methods.push({id:'resi',label:labels.resi,color:colors.resi,monthly:mo,totalPay:tp,interest,
+      ins5,fuel5,shakenAdj:shaken*0.5,repairAdj:repair,maint,depr80:0,deduct,tax,gross,net,sale:0,
+      ecoSubsidy,ecoRunning,
+      deductDetail:{depr:0,intBiz:0,maintBiz:0}});
+  }
+  if(activeMethods.has('lease')){
+    const rate=n('lease-rate')/100, ln=+v('lease-n'), lm=n('lease-maint');
+    const mo=pmt(rate,ln,total)+lm;
+    const tp=mo*ln;
+    const interest=tp-total;
+    const maint=ins5+fuel5+shaken*0.5-ecoRunning;
+    const deduct=tp+maint*biz;
+    const tax=deduct*taxRate;
+    const gross=tp+maint-ecoSubsidy;
+    const net=gross-tax;
+    methods.push({id:'lease',label:labels.lease,color:colors.lease,monthly:mo,totalPay:tp,interest,
+      ins5,fuel5,shakenAdj:shaken*0.5,repairAdj:0,maint,depr80:0,deduct,tax,gross,net,sale:0,
+      ecoSubsidy,ecoRunning,
+      deductDetail:{depr:0,intBiz:0,maintBiz:maint*biz,leasePay:tp}});
+  }
+  if(activeMethods.has('loan')){
+    const down=n('loan-down'), rate=n('loan-rate')/100, ln2=+v('loan-n');
+    const pr=total-down;
+    const mo=pmt(rate,ln2,pr);
+    const tp=mo*ln2+down;
+    const interest=tp-total;
+    const maint=ins5+fuel5+shaken+repair-ecoRunning;
+    const deduct=depr80+interest*biz+maint*biz;
+    const tax=deduct*taxRate;
+    const gross=total+maint+interest-ecoSubsidy;
+    const net=gross-tax-sale;
+    methods.push({id:'loan',label:labels.loan,color:colors.loan,monthly:mo,totalPay:tp,interest,
+      ins5,fuel5,shakenAdj:shaken,repairAdj:repair,maint,depr80,deduct,tax,gross,net,sale,
+      ecoSubsidy,ecoRunning,
+      deductDetail:{depr:depr80,intBiz:interest*biz,maintBiz:maint*biz}});
+  }
+
+  // rank
+  methods.sort((a,b)=>a.net-b.net);
+  methods.forEach((m,i)=>m.rank=i+1);
+
+  renderResults(methods,{total,taxRate,biz,years,nm,sale,ins5,fuel5,shaken,repair,depr80});
+}
+
+/* ===== RENDER ===== */
+function renderResults(methods,p){
+  const vname=v('v-name')||'車両';
+  const years=p.years;
+
+  // banner
+  document.getElementById('resultBanner').innerHTML=
+    `<h2>${vname}</h2><div class="cond">実効税率 ${(p.taxRate*100).toFixed(0)}%｜業務使用 ${(p.biz*100).toFixed(0)}%｜比較期間 ${years}年｜取得総額 ${fmt(n('v-total'))}</div>`;
+
+  // KPI
+  const ordinals=['1st','2nd','3rd','4th','5th'];
+  const badgeColors=['var(--green)','var(--blue)','var(--amber)','var(--purple)','var(--red)'];
+  document.getElementById('kpiStrip').innerHTML=methods.map((m,i)=>`
+    <div class="kpi-card">
+      <div class="top-bar" style="background:${m.color}"></div>
+      <span class="badge" style="background:${badgeColors[i]}">${ordinals[i]}</span>
+      <div class="mname">${m.label}</div>
+      <div class="val mono">${fmt(m.net)}</div>
+      <div class="sub">${fmtM(m.net/p.nm)} ｜ 節税 ${fmt(m.tax)}</div>
+    </div>`).join('');
+
+  // CF Table
+  renderCFTable(methods,p);
+  // Graphs
+  renderGraphs(methods,p);
+  // Non-financial
+  renderNonFinancial(methods);
+  // Compass
+  renderCompass(methods,p);
+  // Footer
+  const today=new Date();
+  document.getElementById('footerText').innerHTML=
+    `計算前提・免責：実効税率${(p.taxRate*100).toFixed(0)}%・業務使用割合${(p.biz*100).toFixed(0)}%で試算。減価償却は定率法3年（率0.667）を前提。維持費は入力値を${years}年分で按分。リース月額は元利均等計算（実際のリース会社見積もりと異なる場合あり）。本ツールの計算結果はあくまで参考値です。最終的な税務・財務判断は担当税理士・顧問へご確認ください。<br>Powered by U&I 株式会社 コンサルティング事業部　${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')} 作成`;
+
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+/* ===== CF TABLE ===== */
+function renderCFTable(methods,p){
+  const years=p.years;
+  // find best/worst for each row
+  function bw(arr){
+    const vals=arr.filter(x=>x!=null);
+    if(vals.length<2)return{b:null,w:null};
+    return{b:Math.min(...vals),w:Math.max(...vals)};
+  }
+  function cls(val,best,worst){
+    if(val==null)return '';
+    if(val===best&&best!==worst)return ' class="bv"';
+    if(val===worst&&best!==worst)return ' class="wv"';
+    return '';
+  }
+
+  const rows=[
+    {section:`— 月次支払い${'─'.repeat(20)}`},
+    {label:'月次支払額',key:'monthly',format:x=>x===0?'0円':fmtM(x),note:null,lower:true},
+    {label:'支払合計（借入分）',key:'totalPay',format:fmt,note:null,lower:true},
+    {label:'金利・手数料',key:'interest',format:fmt,note:null,lower:true},
+    {section:`— 維持費（${years}年累計）${'─'.repeat(15)}`},
+    {label:'任意保険（'+years+'年）',key:'ins5',format:fmt,note:null,lower:true},
+    {label:'燃料費（'+years+'年）',key:'fuel5',format:fmt,note:null,lower:true},
+    {label:'車検・法定費用',key:'shakenAdj',format:fmt,note:m=>m.id==='resi'||m.id==='lease'?'リース/残クレ ×0.5':null,lower:true},
+    {label:'修繕積立',key:'repairAdj',format:fmt,note:m=>m.id==='lease'?'リース内包':null,lower:true},
+    {section:`— 節税効果（法人のみ）${'─'.repeat(15)}`},
+    {label:'減価償却 業務按分',key:m=>m.deductDetail.depr,format:fmt,note:m=>m.id==='resi'?'個人=不可':m.id==='lease'?'リース=会社計上':null,lower:false,higher:true},
+    {label:'リース料・利息+維持費 損金',key:m=>(m.deductDetail.intBiz||0)+(m.deductDetail.maintBiz||0)+(m.deductDetail.leasePay||0),format:fmt,note:null,lower:false,higher:true},
+    {label:'▲ 節税効果合計',key:'tax',format:x=>fmt(-x),note:null,lower:false,higher:true,bold:true},
+    {section:`— エコカー減税・補助金${'─'.repeat(13)}`},
+    {label:'CEV・環境性能割・自治体補助',key:'ecoSubsidy',format:x=>x>0?fmt(-x):'0円',note:null,lower:false,higher:true},
+    {label:'重量税軽減+グリーン化特例',key:'ecoRunning',format:x=>x>0?fmt(-x):'0円',note:null,lower:false,higher:true},
+    {section:`— 売却収入${'─'.repeat(20)}`},
+    {label:'期末売却・返却',key:'sale',format:fmt,note:m=>m.sale===0?'所有権なし/残価精算':null,lower:false,higher:true},
+    {total:true,label:`✦ ${years}年間 実質コスト`,key:'net'}
+  ];
+
+  let html='<table class="cf-table"><thead><tr><th></th>';
+  methods.forEach(m=>html+=`<th style="color:${m.color}">${m.label}</th>`);
+  html+='</tr></thead><tbody>';
+
+  rows.forEach(row=>{
+    if(row.section){
+      html+=`<tr class="section-row"><td colspan="${methods.length+1}">${row.section}</td></tr>`;
+      return;
+    }
+    if(row.total){
+      const vals=methods.map(m=>m[row.key]);
+      const {b,w}=bw(vals);
+      html+=`<tr class="total-row"><th>${row.label}</th>`;
+      methods.forEach(m=>{
+        const val=m[row.key];
+        html+=`<td${cls(val,b,w)} style="font-family:'JetBrains Mono',monospace">${fmt(val)}</td>`;
+      });
+      html+='</tr>';
+      return;
+    }
+    const vals=methods.map(m=>typeof row.key==='function'?row.key(m):m[row.key]);
+    let {b,w}=bw(vals);
+    // for higher-is-better rows, swap
+    if(row.higher){[b,w]=[w,b]}
+    html+=`<tr${row.bold?' style="font-weight:700"':''}><th>${row.label}</th>`;
+    methods.forEach((m,i)=>{
+      const val=vals[i];
+      const noteText=row.note?row.note(m):null;
+      const formatted=row.format?row.format(val):fmt(val);
+      html+=`<td${cls(val,b,w)}>${formatted}${noteText?'<span class="nc">'+noteText+'</span>':''}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('tab-cf').innerHTML=html;
+}
+
+/* ===== GRAPHS ===== */
+function renderGraphs(methods,p){
+  const maxNet=Math.max(...methods.map(m=>m.net));
+  let html='<div class="bar-chart"><h3>'+p.years+'年間 実質コスト比較</h3>';
+  methods.forEach(m=>{
+    const pct=maxNet>0?(m.net/maxNet*100):0;
+    html+=`<div class="bar-item">
+      <div class="bar-label">${m.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${m.color}">${m.rank}位</div></div>
+      <div class="bar-val mono">${fmt(m.net)}</div>
+    </div>`;
+  });
+  html+='</div>';
+
+  // Tax savings
+  const taxMethods=methods.filter(m=>m.tax>0).sort((a,b)=>b.tax-a.tax);
+  if(taxMethods.length>0){
+    const maxTax=Math.max(...taxMethods.map(m=>m.tax));
+    html+='<div class="bar-chart"><h3>節税効果比較</h3>';
+    taxMethods.forEach(m=>{
+      const pct=maxTax>0?(m.tax/maxTax*100):0;
+      html+=`<div class="bar-item">
+        <div class="bar-label">${m.label}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${m.color}">${fmt(m.tax)}</div></div>
+        <div class="bar-val mono">${fmt(m.tax)}</div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+  document.getElementById('tab-graph').innerHTML=html;
+}
+
+/* ===== NON-FINANCIAL ===== */
+function renderNonFinancial(methods){
+  const evalMap={
+    cash:{init:'bad',monthly:'good',own:'good',taxDeduct:'good',sellFree:'good',loan:'good',repair:'bad',score:4},
+    bank:{init:'good',monthly:'mid',own:'good',taxDeduct:'good',sellFree:'mid',loan:'mid',repair:'bad',score:3},
+    resi:{init:'good',monthly:'mid',own:'bad',taxDeduct:'bad',sellFree:'bad',loan:'good',repair:'mid',score:2},
+    lease:{init:'good',monthly:'mid',own:'bad',taxDeduct:'good',sellFree:'bad',loan:'good',repair:'good',score:3},
+    loan:{init:'mid',monthly:'mid',own:'good',taxDeduct:'good',sellFree:'mid',loan:'bad',repair:'bad',score:3}
+  };
+  const tagLabel={good:'良',mid:'中',bad:'難'};
+  const items=[
+    {label:'初期現金流出',key:'init'},
+    {label:'月次固定支出',key:'monthly'},
+    {label:'所有権・資産性',key:'own'},
+    {label:'節税・損金算入',key:'taxDeduct'},
+    {label:'途中売却の自由度',key:'sellFree'},
+    {label:'融資枠への影響',key:'loan'},
+    {label:'修繕リスク',key:'repair'}
+  ];
+
+  let html='<table class="nf-table"><thead><tr><th>評価項目</th>';
+  methods.forEach(m=>html+=`<th style="color:${m.color}">${m.label}</th>`);
+  html+='</tr></thead><tbody>';
+  items.forEach(item=>{
+    html+='<tr><td>'+item.label+'</td>';
+    methods.forEach(m=>{
+      const ev=evalMap[m.id]||{};
+      const val=ev[item.key]||'mid';
+      html+=`<td><span class="tag tag-${val}">${tagLabel[val]}</span></td>`;
+    });
+    html+='</tr>';
+  });
+  // total score
+  html+='<tr><td><b>総合評価</b></td>';
+  methods.forEach(m=>{
+    const sc=(evalMap[m.id]||{}).score||3;
+    html+=`<td class="stars">${'★'.repeat(sc)}${'☆'.repeat(5-sc)}</td>`;
+  });
+  html+='</tr></tbody></table>';
+  document.getElementById('tab-nf').innerHTML=html;
+}
+
+/* ===== COMPASS ===== */
+function renderCompass(methods,p){
+  const corpMethods=methods.filter(m=>m.id!=='resi');
+
+  // 1. max tax saving (corp only)
+  const maxTaxM=corpMethods.length>0?corpMethods.reduce((a,b)=>a.tax>b.tax?a:b):null;
+  // 2. min net cost
+  const minNetM=methods[0]; // already sorted
+  // 3. cash preservation (non-cash, min net)
+  const nonCash=methods.filter(m=>m.id!=='cash');
+  const cashSaveM=nonCash.length>0?nonCash.reduce((a,b)=>a.net<b.net?a:b):null;
+  // 4. min monthly
+  const minMonthlyM=methods.filter(m=>m.monthly>0).sort((a,b)=>a.monthly-b.monthly)[0]||methods[0];
+
+  const cards=[
+    {title:'今期節税最大化',rec:maxTaxM?maxTaxM.label:'—',reason:maxTaxM?`節税効果 ${fmt(maxTaxM.tax)}`:'法人メソッドなし',icon:'💰'},
+    {title:'総コスト最小',rec:minNetM.label,reason:`${p.years}年実質コスト ${fmt(minNetM.net)}`,icon:'🏆'},
+    {title:'現金温存',rec:cashSaveM?cashSaveM.label:'—',reason:cashSaveM?`現金一括以外で最安 ${fmt(cashSaveM.net)}`:'—',icon:'🏦'},
+    {title:'月次負担最小',rec:minMonthlyM.label,reason:minMonthlyM.monthly>0?`月額 ${fmtM(minMonthlyM.monthly)}`:'月次支払なし（一括）',icon:'📅'}
+  ];
+
+  let html='<div class="compass-grid">';
+  cards.forEach(c=>{
+    html+=`<div class="compass-card">
+      <h4>${c.icon} ${c.title}</h4>
+      <div class="rec">${c.rec}</div>
+      <div class="reason">${c.reason}</div>
+    </div>`;
+  });
+  html+='</div>';
+  html+=`<div class="notice-box">
+    <b>⚠ 必須確認事項（税理士・顧問確認項目）</b><br>
+    ・減価償却方法（定率法 vs 定額法）の適用可否<br>
+    ・業務使用割合の根拠資料（走行記録等）<br>
+    ・リース料の全額損金算入の可否（所有権移転外ファイナンスリース確認）<br>
+    ・残価設定ローンの残価精算時の会計処理<br>
+    ・消費税の仕入税額控除タイミング<br>
+    ・中古車特例（耐用年数の短縮）の適用可否
+  </div>`;
+  document.getElementById('tab-compass').innerHTML=html;
+}
+
+/* ===== TABS ===== */
+function switchTab(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(el.dataset.tab).classList.add('active');
+}
+
+/* ===== RESET ===== */
+function resetAll(){
+  document.getElementById('results').style.display='none';
+  document.getElementById('v-name').value='';
+  document.getElementById('v-price').value='';
+  document.getElementById('v-total').value='';
+  document.getElementById('v-misc').value='290000';
+  document.getElementById('v-opt').value='0';
+  document.getElementById('v-pkg').value='0';
+  document.getElementById('p-ins').value='200000';
+  document.getElementById('p-fuel').value='144000';
+  document.getElementById('p-shaken').value='310000';
+  document.getElementById('p-repair').value='250000';
+  document.getElementById('p-sale').value='3900000';
+  // reset eco fields
+  ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>document.getElementById(id).value='0');
+  // reset sliders
+  ['p-tax','p-biz','p-years'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.value=el.defaultValue;
+    el.nextElementSibling.textContent=el.defaultValue+(id==='p-years'?'年':'%');
+  });
+}
+
+/* ===== PDF ===== */
+function exportPDF(){
+  const resultsEl=document.getElementById('results');
+  if(resultsEl.style.display==='none'){alert('先に比較分析を実行してください');return}
+
+  const isDark=document.body.classList.contains('dark');
+  // show all tabs
+  const panels=document.querySelectorAll('.tab-content');
+  const origDisplay=[];
+  panels.forEach(p=>{origDisplay.push(p.style.display);p.style.display='block'});
+  // hide input area
+  const inputEls=[document.getElementById('step1'),document.getElementById('step2'),document.getElementById('step3'),document.getElementById('actionBtns'),document.querySelector('header')];
+  const origInput=[];
+  inputEls.forEach(el=>{if(el){origInput.push(el.style.display);el.style.display='none'}});
+  // hide tab bar
+  const tabBar=document.getElementById('tabBar');
+  const origTabBar=tabBar.style.display;
+  tabBar.style.display='none';
+
+  const vname=(v('v-name')||'vehicle').replace(/\s+/g,'_');
+  const today=new Date();
+  const dateStr=`${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+
+  const opt={
+    margin:[10,8,10,8],
+    filename:`vehicle_cf_${vname}_${dateStr}.pdf`,
+    image:{type:'jpeg',quality:0.92},
+    html2canvas:{scale:1.8,useCORS:true,backgroundColor:isDark?'#0E0A06':'#FDFAF6'},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['avoid-all','css']}
+  };
+
+  html2pdf().set(opt).from(resultsEl).save().then(()=>{
+    // restore
+    panels.forEach((p,i)=>p.style.display=origDisplay[i]);
+    inputEls.forEach((el,i)=>{if(el)el.style.display=origInput[i]||''});
+    tabBar.style.display=origTabBar||'';
+    // restore active tab
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    const activeTab=document.querySelector('.tab.active');
+    if(activeTab)document.getElementById(activeTab.dataset.tab).classList.add('active');
+  });
+}
+</script>
+</body>
+</html>
