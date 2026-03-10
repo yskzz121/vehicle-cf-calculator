@@ -97,12 +97,12 @@ header .sub{font-size:.82rem;color:var(--ink3);margin-top:2px}
 .tab-content.active{display:block}
 
 /* CF Table */
-.cf-table{width:100%;border-collapse:collapse;font-size:.82rem}
-.cf-table th,.cf-table td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--rule2)}
+.cf-table{width:100%;border-collapse:collapse;font-size:.82rem;table-layout:fixed}
+.cf-table th,.cf-table td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--rule2);word-wrap:break-word}
 .cf-table th{text-align:left;font-weight:600;color:var(--ink2)}
-.cf-table th:first-child{min-width:180px}
-.cf-table .section-row td,.cf-table .section-row th{background:var(--bg2);font-weight:700;font-size:.78rem;color:var(--ink3);letter-spacing:.5px;padding:5px 12px}
-.cf-table .total-row td{font-weight:700;font-size:.95rem;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);background:var(--bg)}
+.cf-table thead th:first-child{width:200px}
+.cf-table .section-row td{background:var(--bg2);font-weight:700;font-size:.78rem;color:var(--ink3);letter-spacing:.5px;padding:5px 12px;text-align:left}
+.cf-table .total-row td,.cf-table .total-row th{font-weight:700;font-size:.95rem;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);background:var(--bg)}
 .cf-table .bv{color:var(--green);font-weight:700}
 .cf-table .wv{color:var(--red);font-weight:700}
 .cf-table .nc{display:block;font-size:.7rem;color:var(--ink4);font-weight:400}
