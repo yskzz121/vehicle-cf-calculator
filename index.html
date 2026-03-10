@@ -216,7 +216,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     </div>
   </div>
   <div class="field" style="margin-bottom:12px">
-    <label>個人 所得税+住民税 実効税率 <span style="font-size:.7rem;color:var(--ink4)">（個人事業主の場合）</span></label>
+    <label>個人事業主 所得税+住民税 実効税率 <span style="font-size:.7rem;color:var(--ink4)">（給与所得者は車購入の税メリットなし）</span></label>
     <div class="slider-wrap">
       <input type="range" id="p-ptax" min="15" max="55" value="30" oninput="this.nextElementSibling.textContent=this.value+'%'">
       <span class="slider-val">30%</span>
@@ -348,7 +348,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
   </div>
 
   <!-- pcash params -->
-  <div class="method-params" id="mp-pcash"><h4>個人 現金一括</h4><p style="font-size:.8rem;color:var(--ink3)">追加パラメーターなし（個人事業主の場合、業務按分で所得控除が適用されます）</p></div>
+  <div class="method-params" id="mp-pcash"><h4>個人 現金一括</h4><p style="font-size:.8rem;color:var(--ink3)">追加パラメーターなし<br><span style="color:var(--amber)">※ 個人事業主の場合：減価償却費・維持費を業務按分で必要経費計上 → 所得税+住民税を軽減<br>※ 給与所得者の場合：車購入に税制上のメリットはありません</span></p></div>
 
   <!-- pbank params -->
   <div class="method-params" id="mp-pbank">
@@ -716,7 +716,7 @@ function renderResults(methods,p){
       <span class="badge" style="background:${badgeColors[i]}">${ordinals[i]}</span>
       <div class="mname">${m.label}</div>
       <div class="val mono">${fmt(m.net)}</div>
-      <div class="sub">${fmtM(m.net/p.nm)} ｜ ${m.isPersonal?'所得控除':'節税'} ${fmt(m.tax)}</div>
+      <div class="sub">${fmtM(m.net/p.nm)} ｜ ${m.isPersonal?'必要経費控除':'節税'} ${fmt(m.tax)}</div>
     </div>`).join('');
 
   // CF Table
@@ -730,7 +730,7 @@ function renderResults(methods,p){
   // Footer
   const today=new Date();
   document.getElementById('footerText').innerHTML=
-    `計算前提・免責：法人税率${(p.taxRate*100).toFixed(0)}%・個人税率${(p.pTaxRate*100).toFixed(0)}%・業務使用割合${(p.biz*100).toFixed(0)}%で試算。減価償却は定率法3年（率0.667）を前提。維持費は入力値を${years}年分で按分。リース月額は元利均等計算（実際のリース会社見積もりと異なる場合あり）。本ツールの計算結果はあくまで参考値です。最終的な税務・財務判断は担当税理士・顧問へご確認ください。<br>Powered by U&I 株式会社 コンサルティング事業部　${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')} 作成`;
+    `計算前提・免責：法人税率${(p.taxRate*100).toFixed(0)}%・個人事業主税率${(p.pTaxRate*100).toFixed(0)}%・業務使用割合${(p.biz*100).toFixed(0)}%で試算。個人メソッドは個人事業主を前提（給与所得者は税メリットなし）。減価償却は定率法3年（率0.667）を前提。維持費は入力値を${years}年分で按分。リース月額は元利均等計算（実際のリース会社見積もりと異なる場合あり）。本ツールの計算結果はあくまで参考値です。最終的な税務・財務判断は担当税理士・顧問へご確認ください。<br>Powered by U&I 株式会社 コンサルティング事業部　${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')} 作成`;
 
   document.getElementById('results').style.display='block';
   document.getElementById('results').scrollIntoView({behavior:'smooth'});
@@ -762,13 +762,13 @@ function renderCFTable(methods,p){
     {label:'燃料費（'+years+'年）',key:'fuel5',format:fmt,note:null,lower:true},
     {label:'車検・法定費用',key:'shakenAdj',format:fmt,note:m=>m.id==='resi'||m.id==='lease'?'リース/残クレ ×0.5':null,lower:true},
     {label:'修繕積立',key:'repairAdj',format:fmt,note:m=>m.id==='lease'?'リース内包':null,lower:true},
-    {section:'損金算入・所得控除・節税効果'},
+    {section:'損金算入（法人）・必要経費（個人事業主）'},
     {label:'減価償却 業務按分',key:m=>m.deductDetail.depr,format:fmt,note:m=>m.id==='resi'?'個人残クレ=不可':m.id==='lease'?'リース=N/A':m.isPersonal?'必要経費':null,lower:false,higher:true},
     {label:'利息 業務按分',key:m=>m.deductDetail.intBiz||0,format:fmt,note:m=>m.id==='resi'?'個人残クレ=不可':m.id==='lease'?'リース料に含む':m.id==='cash'||m.id==='pcash'?'—':m.isPersonal?'必要経費':null,lower:false,higher:true},
     {label:'リース料 全額損金',key:m=>m.deductDetail.leasePay||0,format:x=>x>0?fmt(x):'—',note:m=>m.id==='lease'?'全額経費計上':null,lower:false,higher:true},
     {label:'維持費 業務按分',key:m=>m.deductDetail.maintBiz||0,format:fmt,note:m=>m.id==='resi'?'個人残クレ=不可':m.isPersonal?'必要経費':null,lower:false,higher:true},
-    {label:'控除額 合計',key:'deduct',format:fmt,note:m=>m.isPersonal?'所得控除':m.id==='resi'?'—':m.deduct>0?'損金算入':null,lower:false,higher:true,bold:true},
-    {label:'▲ 節税効果（控除額×税率）',key:'tax',format:x=>fmt(-x),note:null,lower:false,higher:true,bold:true},
+    {label:'経費計上額 合計',key:'deduct',format:fmt,note:m=>m.isPersonal?'必要経費':m.id==='resi'?'—':m.deduct>0?'損金算入':null,lower:false,higher:true,bold:true},
+    {label:'▲ 節税効果（経費×税率）',key:'tax',format:x=>fmt(-x),note:m=>m.isPersonal?'所得税+住民税軽減':null,lower:false,higher:true,bold:true},
     {section:'エコカー減税・補助金'},
     {label:'CEV・環境性能割・自治体補助',key:'ecoSubsidy',format:x=>x>0?fmt(-x):'0円',note:null,lower:false,higher:true},
     {label:'重量税軽減+グリーン化特例',key:'ecoRunning',format:x=>x>0?fmt(-x):'0円',note:null,lower:false,higher:true},
@@ -832,7 +832,7 @@ function renderGraphs(methods,p){
   const taxMethods=methods.filter(m=>m.tax>0).sort((a,b)=>b.tax-a.tax);
   if(taxMethods.length>0){
     const maxTax=Math.max(...taxMethods.map(m=>m.tax));
-    html+='<div class="bar-chart"><h3>節税・所得控除効果比較</h3>';
+    html+='<div class="bar-chart"><h3>節税・必要経費控除効果比較</h3>';
     taxMethods.forEach(m=>{
       const pct=maxTax>0?(m.tax/maxTax*100):0;
       html+=`<div class="bar-item">
@@ -909,7 +909,7 @@ function renderCompass(methods,p){
 
   const cards=[
     {title:'法人 節税最大化',rec:maxTaxM?maxTaxM.label:'—',reason:maxTaxM?`損金算入による節税 ${fmt(maxTaxM.tax)}`:'法人メソッドなし',icon:'💰'},
-    {title:'個人 所得控除最大',rec:maxPtaxM?maxPtaxM.label:'—',reason:maxPtaxM?`所得控除による節税 ${fmt(maxPtaxM.tax)}`:'個人メソッドなし',icon:'📋'},
+    {title:'個人事業主 経費控除最大',rec:maxPtaxM?maxPtaxM.label:'—',reason:maxPtaxM?`必要経費による節税 ${fmt(maxPtaxM.tax)}`:'個人メソッドなし',icon:'📋'},
     {title:'総コスト最小',rec:minNetM.label,reason:`${p.years}年実質コスト ${fmt(minNetM.net)}`,icon:'🏆'},
     {title:'現金温存',rec:cashSaveM?cashSaveM.label:'—',reason:cashSaveM?`現金一括以外で最安 ${fmt(cashSaveM.net)}`:'—',icon:'🏦'},
     {title:'月次負担最小',rec:minMonthlyM.label,reason:minMonthlyM.monthly>0?`月額 ${fmtM(minMonthlyM.monthly)}`:'月次支払なし（一括）',icon:'📅'}
