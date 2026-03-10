@@ -14,7 +14,7 @@
   --ink:#1A1410;--ink2:#3D3028;--ink3:#7A6858;--ink4:#B0A090;
   --rule:#D8CFC4;--rule2:#EDE7DF;--accent:#C0550A;
   --green:#1E6B35;--red:#B52A1C;--amber:#946800;--blue:#154E82;--purple:#5C1E8A;
-  --cash-c:#1E6B35;--bank-c:#946800;--resi-c:#5C1E8A;--lease-c:#B52A1C;--loan-c:#154E82;
+  --cash-c:#1E6B35;--bank-c:#946800;--resi-c:#5C1E8A;--lease-c:#B52A1C;--loan-c:#154E82;--pcash-c:#0E7C6B;--pbank-c:#C06010;
   --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08);
 }
 .dark{
@@ -22,7 +22,7 @@
   --ink:#F0E8DC;--ink2:#C8B89A;--ink3:#7A6050;--ink4:#4A3828;
   --rule:rgba(245,150,26,.18);--rule2:rgba(245,150,26,.08);--accent:#E8620A;
   --green:#39FF14;--red:#FF3B2A;--amber:#F5C518;--blue:#00C8FF;--purple:#C060FF;
-  --cash-c:#39FF14;--bank-c:#F5C518;--resi-c:#C060FF;--lease-c:#FF3B2A;--loan-c:#00C8FF;
+  --cash-c:#39FF14;--bank-c:#F5C518;--resi-c:#C060FF;--lease-c:#FF3B2A;--loan-c:#00C8FF;--pcash-c:#00E5CC;--pbank-c:#FF8C42;
 }
 html{font-size:14px}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;transition:background .3s,color .3s}
@@ -216,6 +216,13 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     </div>
   </div>
   <div class="field" style="margin-bottom:12px">
+    <label>個人 所得税+住民税 実効税率 <span style="font-size:.7rem;color:var(--ink4)">（個人事業主の場合）</span></label>
+    <div class="slider-wrap">
+      <input type="range" id="p-ptax" min="15" max="55" value="30" oninput="this.nextElementSibling.textContent=this.value+'%'">
+      <span class="slider-val">30%</span>
+    </div>
+  </div>
+  <div class="field" style="margin-bottom:12px">
     <label>業務使用割合</label>
     <div class="slider-wrap">
       <input type="range" id="p-biz" min="50" max="100" value="80" oninput="this.nextElementSibling.textContent=this.value+'%'">
@@ -285,6 +292,8 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div class="tog" data-m="resi" onclick="toggleMethod(this)"><span class="dot" style="background:var(--resi-c)"></span>個人 残価ローン</div>
     <div class="tog" data-m="lease" onclick="toggleMethod(this)"><span class="dot" style="background:var(--lease-c)"></span>法人 リース</div>
     <div class="tog" data-m="loan" onclick="toggleMethod(this)"><span class="dot" style="background:var(--loan-c)"></span>法人 ローン</div>
+    <div class="tog" data-m="pcash" onclick="toggleMethod(this)"><span class="dot" style="background:var(--pcash-c)"></span>個人 現金一括</div>
+    <div class="tog" data-m="pbank" onclick="toggleMethod(this)"><span class="dot" style="background:var(--pbank-c)"></span>個人 銀行ローン</div>
   </div>
 
   <!-- cash params -->
@@ -336,6 +345,21 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
       <div class="slider-wrap"><input type="range" id="loan-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
     </div>
     <div class="field"><label>頭金（円）</label><input type="number" id="loan-down" value="0"></div>
+  </div>
+
+  <!-- pcash params -->
+  <div class="method-params" id="mp-pcash"><h4>個人 現金一括</h4><p style="font-size:.8rem;color:var(--ink3)">追加パラメーターなし（個人事業主の場合、業務按分で所得控除が適用されます）</p></div>
+
+  <!-- pbank params -->
+  <div class="method-params" id="mp-pbank">
+    <h4>個人 銀行ローン</h4>
+    <div class="field" style="margin-bottom:8px"><label>年利</label>
+      <div class="slider-wrap"><input type="range" id="pbank-rate" min="0.5" max="8" step="0.1" value="2.5" oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="slider-val">2.5%</span></div>
+    </div>
+    <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
+      <div class="slider-wrap"><input type="range" id="pbank-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
+    </div>
+    <div class="field"><label>頭金（円）</label><input type="number" id="pbank-down" value="0"></div>
   </div>
 </div>
 
@@ -500,7 +524,7 @@ function toggleMethod(el){
   updateMethodPanels();
 }
 function updateMethodPanels(){
-  ['cash','bank','resi','lease','loan'].forEach(m=>{
+  ['cash','bank','resi','lease','loan','pcash','pbank'].forEach(m=>{
     const p=document.getElementById('mp-'+m);
     p.classList.toggle('show',activeMethods.has(m));
   });
@@ -558,9 +582,11 @@ function calculate(){
   const ecoSubsidy=ecoCev+ecoPerf+ecoLocal; // 取得時の補助金合計
   const ecoRunning=ecoWeight+ecoGreen;       // 維持費軽減合計
 
+  const pTaxRate=n('p-ptax')/100;
+
   const methods=[];
-  const labels={cash:'法人 現金一括',bank:'法人 銀行借入',resi:'個人 残価ローン',lease:'法人 リース',loan:'法人 ローン'};
-  const colors={cash:'var(--cash-c)',bank:'var(--bank-c)',resi:'var(--resi-c)',lease:'var(--lease-c)',loan:'var(--loan-c)'};
+  const labels={cash:'法人 現金一括',bank:'法人 銀行借入',resi:'個人 残価ローン',lease:'法人 リース',loan:'法人 ローン',pcash:'個人 現金一括',pbank:'個人 銀行ローン'};
+  const colors={cash:'var(--cash-c)',bank:'var(--bank-c)',resi:'var(--resi-c)',lease:'var(--lease-c)',loan:'var(--loan-c)',pcash:'var(--pcash-c)',pbank:'var(--pbank-c)'};
 
   if(activeMethods.has('cash')){
     const maint=ins5+fuel5+shaken+repair-ecoRunning;
@@ -637,11 +663,39 @@ function calculate(){
       deductDetail:{depr:depr80,intBiz:interest*biz,maintBiz:maint*biz}});
   }
 
+  if(activeMethods.has('pcash')){
+    const maint=ins5+fuel5+shaken+repair-ecoRunning;
+    const deduct=depr80+maint*biz;
+    const tax=deduct*pTaxRate;
+    const gross=total+maint-ecoSubsidy;
+    const net=gross-tax-sale;
+    methods.push({id:'pcash',label:labels.pcash,color:colors.pcash,monthly:0,totalPay:0,interest:0,
+      ins5,fuel5,shakenAdj:shaken,repairAdj:repair,maint,depr80,deduct,tax,gross,net,sale,
+      ecoSubsidy,ecoRunning,isPersonal:true,
+      deductDetail:{depr:depr80,intBiz:0,maintBiz:maint*biz}});
+  }
+  if(activeMethods.has('pbank')){
+    const down=n('pbank-down'), rate=n('pbank-rate')/100, pbn=+v('pbank-n');
+    const pr=total-down;
+    const mo=pmt(rate,pbn,pr);
+    const tp=mo*pbn+down;
+    const interest=tp-total;
+    const maint=ins5+fuel5+shaken+repair-ecoRunning;
+    const deduct=depr80+interest*biz+maint*biz;
+    const tax=deduct*pTaxRate;
+    const gross=total+maint+interest-ecoSubsidy;
+    const net=gross-tax-sale;
+    methods.push({id:'pbank',label:labels.pbank,color:colors.pbank,monthly:mo,totalPay:tp,interest,
+      ins5,fuel5,shakenAdj:shaken,repairAdj:repair,maint,depr80,deduct,tax,gross,net,sale,
+      ecoSubsidy,ecoRunning,isPersonal:true,
+      deductDetail:{depr:depr80,intBiz:interest*biz,maintBiz:maint*biz}});
+  }
+
   // rank
   methods.sort((a,b)=>a.net-b.net);
   methods.forEach((m,i)=>m.rank=i+1);
 
-  renderResults(methods,{total,taxRate,biz,years,nm,sale,ins5,fuel5,shaken,repair,depr80});
+  renderResults(methods,{total,taxRate,pTaxRate,biz,years,nm,sale,ins5,fuel5,shaken,repair,depr80});
 }
 
 /* ===== RENDER ===== */
@@ -651,7 +705,7 @@ function renderResults(methods,p){
 
   // banner
   document.getElementById('resultBanner').innerHTML=
-    `<h2>${vname}</h2><div class="cond">実効税率 ${(p.taxRate*100).toFixed(0)}%｜業務使用 ${(p.biz*100).toFixed(0)}%｜比較期間 ${years}年｜取得総額 ${fmt(n('v-total'))}</div>`;
+    `<h2>${vname}</h2><div class="cond">法人税率 ${(p.taxRate*100).toFixed(0)}%｜個人税率 ${(p.pTaxRate*100).toFixed(0)}%｜業務使用 ${(p.biz*100).toFixed(0)}%｜比較期間 ${years}年｜取得総額 ${fmt(n('v-total'))}</div>`;
 
   // KPI
   const ordinals=['1st','2nd','3rd','4th','5th'];
@@ -662,7 +716,7 @@ function renderResults(methods,p){
       <span class="badge" style="background:${badgeColors[i]}">${ordinals[i]}</span>
       <div class="mname">${m.label}</div>
       <div class="val mono">${fmt(m.net)}</div>
-      <div class="sub">${fmtM(m.net/p.nm)} ｜ 節税 ${fmt(m.tax)}</div>
+      <div class="sub">${fmtM(m.net/p.nm)} ｜ ${m.isPersonal?'所得控除':'節税'} ${fmt(m.tax)}</div>
     </div>`).join('');
 
   // CF Table
@@ -676,7 +730,7 @@ function renderResults(methods,p){
   // Footer
   const today=new Date();
   document.getElementById('footerText').innerHTML=
-    `計算前提・免責：実効税率${(p.taxRate*100).toFixed(0)}%・業務使用割合${(p.biz*100).toFixed(0)}%で試算。減価償却は定率法3年（率0.667）を前提。維持費は入力値を${years}年分で按分。リース月額は元利均等計算（実際のリース会社見積もりと異なる場合あり）。本ツールの計算結果はあくまで参考値です。最終的な税務・財務判断は担当税理士・顧問へご確認ください。<br>Powered by U&I 株式会社 コンサルティング事業部　${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')} 作成`;
+    `計算前提・免責：法人税率${(p.taxRate*100).toFixed(0)}%・個人税率${(p.pTaxRate*100).toFixed(0)}%・業務使用割合${(p.biz*100).toFixed(0)}%で試算。減価償却は定率法3年（率0.667）を前提。維持費は入力値を${years}年分で按分。リース月額は元利均等計算（実際のリース会社見積もりと異なる場合あり）。本ツールの計算結果はあくまで参考値です。最終的な税務・財務判断は担当税理士・顧問へご確認ください。<br>Powered by U&I 株式会社 コンサルティング事業部　${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')} 作成`;
 
   document.getElementById('results').style.display='block';
   document.getElementById('results').scrollIntoView({behavior:'smooth'});
@@ -708,13 +762,13 @@ function renderCFTable(methods,p){
     {label:'燃料費（'+years+'年）',key:'fuel5',format:fmt,note:null,lower:true},
     {label:'車検・法定費用',key:'shakenAdj',format:fmt,note:m=>m.id==='resi'||m.id==='lease'?'リース/残クレ ×0.5':null,lower:true},
     {label:'修繕積立',key:'repairAdj',format:fmt,note:m=>m.id==='lease'?'リース内包':null,lower:true},
-    {section:'損金算入・節税効果（法人のみ）'},
-    {label:'減価償却 業務按分',key:m=>m.deductDetail.depr,format:fmt,note:m=>m.id==='resi'?'個人=不可':m.id==='lease'?'リース=N/A':null,lower:false,higher:true},
-    {label:'利息 業務按分',key:m=>m.deductDetail.intBiz||0,format:fmt,note:m=>m.id==='resi'?'個人=不可':m.id==='lease'?'リース料に含む':m.id==='cash'?'—':null,lower:false,higher:true},
+    {section:'損金算入・所得控除・節税効果'},
+    {label:'減価償却 業務按分',key:m=>m.deductDetail.depr,format:fmt,note:m=>m.id==='resi'?'個人残クレ=不可':m.id==='lease'?'リース=N/A':m.isPersonal?'必要経費':null,lower:false,higher:true},
+    {label:'利息 業務按分',key:m=>m.deductDetail.intBiz||0,format:fmt,note:m=>m.id==='resi'?'個人残クレ=不可':m.id==='lease'?'リース料に含む':m.id==='cash'||m.id==='pcash'?'—':m.isPersonal?'必要経費':null,lower:false,higher:true},
     {label:'リース料 全額損金',key:m=>m.deductDetail.leasePay||0,format:x=>x>0?fmt(x):'—',note:m=>m.id==='lease'?'全額経費計上':null,lower:false,higher:true},
-    {label:'維持費 業務按分',key:m=>m.deductDetail.maintBiz||0,format:fmt,note:m=>m.id==='resi'?'個人=不可':null,lower:false,higher:true},
-    {label:'損金算入額 合計',key:'deduct',format:fmt,note:null,lower:false,higher:true,bold:true},
-    {label:'▲ 節税効果（損金×税率）',key:'tax',format:x=>fmt(-x),note:null,lower:false,higher:true,bold:true},
+    {label:'維持費 業務按分',key:m=>m.deductDetail.maintBiz||0,format:fmt,note:m=>m.id==='resi'?'個人残クレ=不可':m.isPersonal?'必要経費':null,lower:false,higher:true},
+    {label:'控除額 合計',key:'deduct',format:fmt,note:m=>m.isPersonal?'所得控除':m.id==='resi'?'—':m.deduct>0?'損金算入':null,lower:false,higher:true,bold:true},
+    {label:'▲ 節税効果（控除額×税率）',key:'tax',format:x=>fmt(-x),note:null,lower:false,higher:true,bold:true},
     {section:'エコカー減税・補助金'},
     {label:'CEV・環境性能割・自治体補助',key:'ecoSubsidy',format:x=>x>0?fmt(-x):'0円',note:null,lower:false,higher:true},
     {label:'重量税軽減+グリーン化特例',key:'ecoRunning',format:x=>x>0?fmt(-x):'0円',note:null,lower:false,higher:true},
@@ -778,7 +832,7 @@ function renderGraphs(methods,p){
   const taxMethods=methods.filter(m=>m.tax>0).sort((a,b)=>b.tax-a.tax);
   if(taxMethods.length>0){
     const maxTax=Math.max(...taxMethods.map(m=>m.tax));
-    html+='<div class="bar-chart"><h3>節税効果比較</h3>';
+    html+='<div class="bar-chart"><h3>節税・所得控除効果比較</h3>';
     taxMethods.forEach(m=>{
       const pct=maxTax>0?(m.tax/maxTax*100):0;
       html+=`<div class="bar-item">
@@ -799,14 +853,16 @@ function renderNonFinancial(methods){
     bank:{init:'good',monthly:'mid',own:'good',taxDeduct:'good',sellFree:'mid',loan:'mid',repair:'bad',score:3},
     resi:{init:'good',monthly:'mid',own:'bad',taxDeduct:'bad',sellFree:'bad',loan:'good',repair:'mid',score:2},
     lease:{init:'good',monthly:'mid',own:'bad',taxDeduct:'good',sellFree:'bad',loan:'good',repair:'good',score:3},
-    loan:{init:'mid',monthly:'mid',own:'good',taxDeduct:'good',sellFree:'mid',loan:'bad',repair:'bad',score:3}
+    loan:{init:'mid',monthly:'mid',own:'good',taxDeduct:'good',sellFree:'mid',loan:'bad',repair:'bad',score:3},
+    pcash:{init:'bad',monthly:'good',own:'good',taxDeduct:'mid',sellFree:'good',loan:'good',repair:'bad',score:3},
+    pbank:{init:'good',monthly:'mid',own:'good',taxDeduct:'mid',sellFree:'mid',loan:'mid',repair:'bad',score:3}
   };
   const tagLabel={good:'良',mid:'中',bad:'難'};
   const items=[
     {label:'初期現金流出',key:'init'},
     {label:'月次固定支出',key:'monthly'},
     {label:'所有権・資産性',key:'own'},
-    {label:'節税・損金算入',key:'taxDeduct'},
+    {label:'節税・経費控除',key:'taxDeduct'},
     {label:'途中売却の自由度',key:'sellFree'},
     {label:'融資枠への影響',key:'loan'},
     {label:'修繕リスク',key:'repair'}
@@ -836,20 +892,24 @@ function renderNonFinancial(methods){
 
 /* ===== COMPASS ===== */
 function renderCompass(methods,p){
-  const corpMethods=methods.filter(m=>m.id!=='resi');
+  const corpMethods=methods.filter(m=>!m.isPersonal&&m.id!=='resi');
+  const personalMethods=methods.filter(m=>m.isPersonal);
 
   // 1. max tax saving (corp only)
   const maxTaxM=corpMethods.length>0?corpMethods.reduce((a,b)=>a.tax>b.tax?a:b):null;
+  // 1b. max personal deduction
+  const maxPtaxM=personalMethods.length>0?personalMethods.reduce((a,b)=>a.tax>b.tax?a:b):null;
   // 2. min net cost
   const minNetM=methods[0]; // already sorted
   // 3. cash preservation (non-cash, min net)
-  const nonCash=methods.filter(m=>m.id!=='cash');
+  const nonCash=methods.filter(m=>m.id!=='cash'&&m.id!=='pcash');
   const cashSaveM=nonCash.length>0?nonCash.reduce((a,b)=>a.net<b.net?a:b):null;
   // 4. min monthly
   const minMonthlyM=methods.filter(m=>m.monthly>0).sort((a,b)=>a.monthly-b.monthly)[0]||methods[0];
 
   const cards=[
-    {title:'今期節税最大化',rec:maxTaxM?maxTaxM.label:'—',reason:maxTaxM?`節税効果 ${fmt(maxTaxM.tax)}`:'法人メソッドなし',icon:'💰'},
+    {title:'法人 節税最大化',rec:maxTaxM?maxTaxM.label:'—',reason:maxTaxM?`損金算入による節税 ${fmt(maxTaxM.tax)}`:'法人メソッドなし',icon:'💰'},
+    {title:'個人 所得控除最大',rec:maxPtaxM?maxPtaxM.label:'—',reason:maxPtaxM?`所得控除による節税 ${fmt(maxPtaxM.tax)}`:'個人メソッドなし',icon:'📋'},
     {title:'総コスト最小',rec:minNetM.label,reason:`${p.years}年実質コスト ${fmt(minNetM.net)}`,icon:'🏆'},
     {title:'現金温存',rec:cashSaveM?cashSaveM.label:'—',reason:cashSaveM?`現金一括以外で最安 ${fmt(cashSaveM.net)}`:'—',icon:'🏦'},
     {title:'月次負担最小',rec:minMonthlyM.label,reason:minMonthlyM.monthly>0?`月額 ${fmtM(minMonthlyM.monthly)}`:'月次支払なし（一括）',icon:'📅'}
@@ -871,7 +931,8 @@ function renderCompass(methods,p){
     ・リース料の全額損金算入の可否（所有権移転外ファイナンスリース確認）<br>
     ・残価設定ローンの残価精算時の会計処理<br>
     ・消費税の仕入税額控除タイミング<br>
-    ・中古車特例（耐用年数の短縮）の適用可否
+    ・中古車特例（耐用年数の短縮）の適用可否<br>
+    ・個人事業主の場合：家事按分の妥当性、青色申告特別控除との併用、事業専用口座からの支払い証拠
   </div>`;
   document.getElementById('tab-compass').innerHTML=html;
 }
@@ -901,7 +962,7 @@ function resetAll(){
   // reset eco fields
   ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>document.getElementById(id).value='0');
   // reset sliders
-  ['p-tax','p-biz','p-years'].forEach(id=>{
+  ['p-tax','p-ptax','p-biz','p-years'].forEach(id=>{
     const el=document.getElementById(id);
     el.value=el.defaultValue;
     el.nextElementSibling.textContent=el.defaultValue+(id==='p-years'?'年':'%');
