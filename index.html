@@ -49,6 +49,7 @@ header .sub{font-size:.82rem;color:var(--ink3);margin-top:2px}
 .field{display:flex;flex-direction:column;gap:3px}
 .field label{font-size:.78rem;color:var(--ink3);font-weight:500}
 .field input,.field select{border:1px solid var(--rule);border-radius:6px;padding:7px 10px;background:var(--bg);color:var(--ink);font-size:.9rem;font-family:'JetBrains Mono',monospace}
+.field .fmt-hint{font-size:.68rem;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-top:1px;min-height:1em}
 .field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(192,85,10,.15)}
 
 /* Slider */
@@ -118,6 +119,21 @@ header .sub{font-size:.82rem;color:var(--ink3);margin-top:2px}
 .cf-table .bv{color:var(--green);font-weight:700}
 .cf-table .wv{color:var(--red);font-weight:700}
 .cf-table .nc{display:block;font-size:.7rem;color:var(--ink4);font-weight:400}
+
+/* Monthly CF Panel */
+.mcf-panel{background:var(--surface);border:1px solid var(--rule2);border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow)}
+.mcf-panel h3{font-family:'Lora',serif;font-size:1.05rem;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.mcf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.mcf-card{background:var(--bg);border:1px solid var(--rule2);border-radius:8px;padding:14px;position:relative;overflow:hidden}
+.mcf-card .mcf-top{height:3px;position:absolute;top:0;left:0;right:0}
+.mcf-card .mcf-name{font-size:.82rem;font-weight:600;margin-bottom:10px}
+.mcf-card .mcf-row{display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0;border-bottom:1px dotted var(--rule2)}
+.mcf-card .mcf-row:last-child{border-bottom:none}
+.mcf-card .mcf-row .mcf-label{color:var(--ink3)}
+.mcf-card .mcf-row .mcf-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--ink)}
+.mcf-card .mcf-total{display:flex;justify-content:space-between;font-size:.88rem;font-weight:700;padding:8px 0 0;margin-top:6px;border-top:2px solid var(--rule)}
+.mcf-card .mcf-total .mcf-val{font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.mcf-card .mcf-net{display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;padding:4px 0 0;color:var(--green)}
 .cf-table td{font-family:'JetBrains Mono',monospace;font-size:.82rem}
 
 /* Bar charts */
@@ -278,11 +294,11 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
   <div style="font-size:.78rem;color:var(--ink3);margin-bottom:8px">※ DB選択後も下記フォームは自由に編集できます</div>
   <div class="fg">
     <div class="field"><label>車両名称</label><input type="text" id="v-name" placeholder="例: Mercedes-Benz GLC 220d"></div>
-    <div class="field"><label>車両本体価格（円）</label><input type="number" id="v-price" value="" oninput="autoCalcTotal()"></div>
-    <div class="field"><label>諸費用・登録費（円）</label><input type="number" id="v-misc" value="290000" oninput="autoCalcTotal()"></div>
-    <div class="field"><label>オプション（円）</label><input type="number" id="v-opt" value="0" oninput="autoCalcTotal()"></div>
-    <div class="field"><label>メンテ保証パック（円）</label><input type="number" id="v-pkg" value="0" oninput="autoCalcTotal()"></div>
-    <div class="field"><label>取得総額（円）</label><input type="number" id="v-total" value="" class="mono" style="font-weight:700;color:var(--accent)"></div>
+    <div class="field"><label>車両本体価格（円）</label><input type="text" inputmode="numeric" id="v-price" value="" oninput="fmtNum(this);autoCalcTotal()"><div class="fmt-hint" id="v-price-fmt"></div></div>
+    <div class="field"><label>諸費用・登録費（円）</label><input type="text" inputmode="numeric" id="v-misc" value="290,000" oninput="fmtNum(this);autoCalcTotal()"><div class="fmt-hint" id="v-misc-fmt"></div></div>
+    <div class="field"><label>オプション（円）</label><input type="text" inputmode="numeric" id="v-opt" value="0" oninput="fmtNum(this);autoCalcTotal()"><div class="fmt-hint" id="v-opt-fmt"></div></div>
+    <div class="field"><label>メンテ保証パック（円）</label><input type="text" inputmode="numeric" id="v-pkg" value="0" oninput="fmtNum(this);autoCalcTotal()"><div class="fmt-hint" id="v-pkg-fmt"></div></div>
+    <div class="field"><label>取得総額（円）</label><input type="text" inputmode="numeric" id="v-total" value="" class="mono" style="font-weight:700;color:var(--accent)" oninput="fmtNum(this)"><div class="fmt-hint" id="v-total-fmt"></div></div>
   </div>
 </div>
 
@@ -320,11 +336,11 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
   </div>
 
   <div class="fg">
-    <div class="field"><label>任意保険料（円/年）</label><input type="number" id="p-ins" value="200000"></div>
-    <div class="field"><label>燃料費（円/年）</label><input type="number" id="p-fuel" value="144000"></div>
-    <div class="field"><label>車検・法定費用（期間合計）</label><input type="number" id="p-shaken" value="310000"></div>
-    <div class="field"><label>修繕積立（期間合計）</label><input type="number" id="p-repair" value="250000"></div>
-    <div class="field"><label>N年後売却想定額（円）</label><input type="number" id="p-sale" value="3900000"></div>
+    <div class="field"><label>任意保険料（円/年）</label><input type="text" inputmode="numeric" id="p-ins" value="200,000" oninput="fmtNum(this)"><div class="fmt-hint" id="p-ins-fmt"></div></div>
+    <div class="field"><label>燃料費（円/年）</label><input type="text" inputmode="numeric" id="p-fuel" value="144,000" oninput="fmtNum(this)"><div class="fmt-hint" id="p-fuel-fmt"></div></div>
+    <div class="field"><label>車検・法定費用（期間合計）</label><input type="text" inputmode="numeric" id="p-shaken" value="310,000" oninput="fmtNum(this)"><div class="fmt-hint" id="p-shaken-fmt"></div></div>
+    <div class="field"><label>修繕積立（期間合計）</label><input type="text" inputmode="numeric" id="p-repair" value="250,000" oninput="fmtNum(this)"><div class="fmt-hint" id="p-repair-fmt"></div></div>
+    <div class="field"><label>N年後売却想定額（円）</label><input type="text" inputmode="numeric" id="p-sale" value="3,900,000" oninput="fmtNum(this)"><div class="fmt-hint" id="p-sale-fmt"></div></div>
   </div>
 
   <!-- エコカー減税・補助金 -->
@@ -337,27 +353,27 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div class="fg">
       <div class="field">
         <label>CEV補助金（円）</label>
-        <input type="number" id="eco-cev" value="0">
+        <input type="text" inputmode="numeric" id="eco-cev" value="0" oninput="fmtNum(this)">
         <span style="font-size:.68rem;color:var(--ink4)">EV最大85万/PHEV最大55万/FCV最大255万</span>
       </div>
       <div class="field">
         <label>エコカー減税・重量税軽減（期間合計・円）</label>
-        <input type="number" id="eco-weight" value="0">
+        <input type="text" inputmode="numeric" id="eco-weight" value="0" oninput="fmtNum(this)">
         <span style="font-size:.68rem;color:var(--ink4)">免税〜50%軽減。EV:約3.7万〜7.5万免除</span>
       </div>
       <div class="field">
         <label>環境性能割 軽減額（円）</label>
-        <input type="number" id="eco-perf" value="0">
+        <input type="text" inputmode="numeric" id="eco-perf" value="0" oninput="fmtNum(this)">
         <span style="font-size:.68rem;color:var(--ink4)">非課税〜3%。EV/PHEV:非課税（通常の税額分を入力）</span>
       </div>
       <div class="field">
         <label>グリーン化特例・自動車税軽減（円/年）</label>
-        <input type="number" id="eco-green" value="0">
+        <input type="text" inputmode="numeric" id="eco-green" value="0" oninput="fmtNum(this)">
         <span style="font-size:.68rem;color:var(--ink4)">翌年度約75%軽減。EV:年約2.7万軽減</span>
       </div>
       <div class="field">
         <label>自治体独自補助金（円）</label>
-        <input type="number" id="eco-local" value="0">
+        <input type="text" inputmode="numeric" id="eco-local" value="0" oninput="fmtNum(this)">
         <span style="font-size:.68rem;color:var(--ink4)">東京都EV:最大45万 等。自治体により異なる</span>
       </div>
     </div>
@@ -390,7 +406,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
       <div class="slider-wrap"><input type="range" id="bank-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
     </div>
-    <div class="field"><label>頭金（円）</label><input type="number" id="bank-down" value="0"></div>
+    <div class="field"><label>頭金（円）</label><input type="text" inputmode="numeric" id="bank-down" value="0" oninput="fmtNum(this)"></div>
   </div>
 
   <!-- resi params -->
@@ -402,7 +418,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
       <div class="slider-wrap"><input type="range" id="resi-n" min="12" max="84" step="1" value="59" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">59回</span></div>
     </div>
-    <div class="field"><label>残価設定額（円）</label><input type="number" id="resi-z" value="5000000"></div>
+    <div class="field"><label>残価設定額（円）</label><input type="text" inputmode="numeric" id="resi-z" value="5,000,000" oninput="fmtNum(this)"></div>
   </div>
 
   <!-- lease params -->
@@ -414,7 +430,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div class="field" style="margin-bottom:8px"><label>リース回数（月）</label>
       <div class="slider-wrap"><input type="range" id="lease-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
     </div>
-    <div class="field"><label>メンテ加算（円/月）</label><input type="number" id="lease-maint" value="0"></div>
+    <div class="field"><label>メンテ加算（円/月）</label><input type="text" inputmode="numeric" id="lease-maint" value="0" oninput="fmtNum(this)"></div>
   </div>
 
   <!-- loan params -->
@@ -426,7 +442,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
       <div class="slider-wrap"><input type="range" id="loan-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
     </div>
-    <div class="field"><label>頭金（円）</label><input type="number" id="loan-down" value="0"></div>
+    <div class="field"><label>頭金（円）</label><input type="text" inputmode="numeric" id="loan-down" value="0" oninput="fmtNum(this)"></div>
   </div>
 
   <!-- pcash params -->
@@ -441,7 +457,7 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div class="field" style="margin-bottom:8px"><label>返済回数（月）</label>
       <div class="slider-wrap"><input type="range" id="pbank-n" min="12" max="84" step="1" value="60" oninput="this.nextElementSibling.textContent=this.value+'回'"><span class="slider-val">60回</span></div>
     </div>
-    <div class="field"><label>頭金（円）</label><input type="number" id="pbank-down" value="0"></div>
+    <div class="field"><label>頭金（円）</label><input type="text" inputmode="numeric" id="pbank-down" value="0" oninput="fmtNum(this)"></div>
   </div>
 </div>
 
@@ -455,6 +471,8 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
 <div id="results">
   <div class="result-banner" id="resultBanner"></div>
   <div class="summary-grid" id="summaryGrid"></div>
+
+  <div id="monthlyCFPanel" style="margin:18px 0"></div>
 
   <div class="tabs" id="tabBar">
     <div class="tab active" data-tab="tab-cf" onclick="switchTab(this)">詳細CF比較</div>
@@ -532,23 +550,23 @@ function dbApply(){
   const usedSuffix=isUsedCar?' [中古]':'';
   document.getElementById('v-name').value=`${car.maker} ${car.model} ${car.grade}${usedSuffix}`;
   if(!isUsedCar){
-    document.getElementById('v-price').value=car.price;
-    document.getElementById('v-misc').value=car.misc;
+    setNumVal('v-price',car.price);
+    setNumVal('v-misc',car.misc);
   }else{
     // 中古車は価格を手動入力。諸費用は中古相場
-    document.getElementById('v-misc').value='180000';
+    setNumVal('v-misc',180000);
   }
-  document.getElementById('v-opt').value=0;
-  document.getElementById('v-pkg').value=0;
+  setNumVal('v-opt',0);
+  setNumVal('v-pkg',0);
   autoCalcTotal();
 
   // insurance & fuel
-  if(car.insurance_annual) document.getElementById('p-ins').value=car.insurance_annual;
+  if(car.insurance_annual) setNumVal('p-ins',car.insurance_annual);
   if(car.fuel_efficiency&&car.fuel_efficiency>0){
     let fp=175;
     if(car.fuel_type==='ディーゼル')fp=155;
     else if(car.fuel_type==='EV')fp=30;
-    document.getElementById('p-fuel').value=Math.round(1000/car.fuel_efficiency*fp*12);
+    setNumVal('p-fuel',Math.round(1000/car.fuel_efficiency*fp*12));
   }
 
   // sale & residual (比較期間に連動)
@@ -556,17 +574,17 @@ function dbApply(){
   const cmpYears=+document.getElementById('p-years').value||5;
   const rr=getResidualRate(car,cmpYears);
   if(rr!=null&&total>0){
-    document.getElementById('p-sale').value=Math.round(total*rr);
-    document.getElementById('resi-z').value=Math.round(total*Math.max(0.4,rr));
+    setNumVal('p-sale',Math.round(total*rr));
+    setNumVal('resi-z',Math.round(total*Math.max(0.4,rr)));
   }
 
   // eco (中古車は原則対象外)
   if(!isUsedCar){
-    document.getElementById('eco-cev').value=car.eco_cev||0;
-    document.getElementById('eco-weight').value=car.eco_weight||0;
-    document.getElementById('eco-perf').value=car.eco_perf||0;
-    document.getElementById('eco-green').value=car.eco_green||0;
-    document.getElementById('eco-local').value=car.eco_local||0;
+    setNumVal('eco-cev',car.eco_cev||0);
+    setNumVal('eco-weight',car.eco_weight||0);
+    setNumVal('eco-perf',car.eco_perf||0);
+    setNumVal('eco-green',car.eco_green||0);
+    setNumVal('eco-local',car.eco_local||0);
   }else{
     ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>document.getElementById(id).value='0');
   }
@@ -630,8 +648,8 @@ function onPeriodChange(){
   const cmpYears=+document.getElementById('p-years').value||5;
   const rr=getResidualRate(car,cmpYears);
   if(rr!=null){
-    document.getElementById('p-sale').value=Math.round(total*rr);
-    document.getElementById('resi-z').value=Math.round(total*Math.max(0.4,rr));
+    setNumVal('p-sale',Math.round(total*rr));
+    setNumVal('resi-z',Math.round(total*Math.max(0.4,rr)));
   }
 }
 
@@ -646,16 +664,16 @@ function toggleCondition(el){
   document.getElementById('used-panel').style.display=isUsedCar?'block':'none';
   if(isUsedCar){
     // Reset eco incentives (used cars not eligible)
-    ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>document.getElementById(id).value='0');
+    ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>setNumVal(id,0));
     // Lower misc costs for used
-    document.getElementById('v-misc').value='180000';
+    setNumVal('v-misc',180000);
     // Increase shaken (more frequent for used)
-    document.getElementById('p-shaken').value='400000';
+    setNumVal('p-shaken',400000);
     autoCalcTotal();
     updateUsedInfo();
   }else{
-    document.getElementById('v-misc').value='290000';
-    document.getElementById('p-shaken').value='310000';
+    setNumVal('v-misc',290000);
+    setNumVal('p-shaken',310000);
     autoCalcTotal();
     // Re-apply DB eco values if a car is selected
     const grade=document.getElementById('db-grade').value;
@@ -693,14 +711,32 @@ function toggleTheme(){
   document.getElementById('themeBtn').textContent=d?'☀ ライト':'🌙 ダーク';
 }
 
+/* ===== NUMBER FORMAT ===== */
+function fmtNum(el){
+  // カーソル位置を保持しつつカンマ整形
+  const raw=el.value.replace(/[^0-9.-]/g,'');
+  const num=parseFloat(raw)||0;
+  if(raw===''||raw==='-'){return}
+  const pos=el.selectionStart;
+  const oldLen=el.value.length;
+  el.value=num.toLocaleString('ja-JP');
+  const newLen=el.value.length;
+  const newPos=Math.max(0,pos+(newLen-oldLen));
+  el.setSelectionRange(newPos,newPos);
+}
+function setNumVal(id,val){
+  const el=document.getElementById(id);
+  el.value=Math.round(val).toLocaleString('ja-JP');
+}
+
 /* ===== AUTO CALC TOTAL ===== */
 function autoCalcTotal(){
-  const p=+v('v-price')||0, m=+v('v-misc')||0, o=+v('v-opt')||0, k=+v('v-pkg')||0;
+  const p=n('v-price'), m=n('v-misc'), o=n('v-opt'), k=n('v-pkg');
   const t=p+m+o+k;
-  if(t>0) document.getElementById('v-total').value=t;
+  if(t>0) setNumVal('v-total',t);
 }
 function v(id){return document.getElementById(id).value}
-function n(id){return parseFloat(document.getElementById(id).value)||0}
+function n(id){return parseFloat(document.getElementById(id).value.replace(/[^0-9.-]/g,''))||0}
 
 /* ===== TOGGLE METHODS ===== */
 const activeMethods=new Set(['cash','bank']);
@@ -948,6 +984,8 @@ function renderResults(methods,p){
       <div class="sc-monthly">${m.monthly>0?fmtM(m.monthly):'一括払い'} ｜ 月あたり ${fmtM(m.net/p.nm)}</div>
     </div>`}).join('');
 
+  // Monthly CF Panel
+  renderMonthlyCF(methods,p);
   // CF Table
   renderCFTable(methods,p);
   // Graphs
@@ -963,6 +1001,47 @@ function renderResults(methods,p){
 
   document.getElementById('results').style.display='block';
   document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+/* ===== MONTHLY CF ===== */
+function renderMonthlyCF(methods,p){
+  const nm=p.nm;
+  const moIns=p.ins5/nm;
+  const moFuel=p.fuel5/nm;
+  const moShaken=p.shaken/nm;
+  const moRepair=p.repair/nm;
+  const moMaint=moIns+moFuel+moShaken+moRepair;
+
+  let html='<div class="mcf-panel"><h3>📅 月次キャッシュフロー（実額）</h3><div class="mcf-grid">';
+  methods.forEach(m=>{
+    const moPay=m.monthly||0; // ローン/リース月額
+    const moInitial=moPay===0?(p.total/nm):0; // 一括の場合、月均等按分で参考表示
+    const isLump=(moPay===0);
+    // 維持費（リース/残クレは車検半額、リースは修繕なし）
+    let adjShaken=moShaken, adjRepair=moRepair;
+    if(m.id==='resi'||m.id==='lease') adjShaken=moShaken*0.5;
+    if(m.id==='lease') adjRepair=0;
+    const moMaintAdj=moIns+moFuel+adjShaken+adjRepair;
+    const moTaxBenefit=m.tax/nm;
+    const moTotal=moPay+moMaintAdj;
+    const moNet=(m.net/nm);
+
+    html+=`<div class="mcf-card">
+      <div class="mcf-top" style="background:${m.color}"></div>
+      <div class="mcf-name" style="color:${m.color}">${m.label}</div>
+      ${moPay>0?`<div class="mcf-row"><span class="mcf-label">${m.id==='lease'?'リース料':'ローン返済'}</span><span class="mcf-val">${fmtM(moPay)}</span></div>`:''}
+      ${isLump?`<div class="mcf-row"><span class="mcf-label">車両取得（月按分参考）</span><span class="mcf-val" style="color:var(--ink4)">${fmtM(moInitial)}</span></div>`:''}
+      <div class="mcf-row"><span class="mcf-label">任意保険</span><span class="mcf-val">${fmtM(moIns)}</span></div>
+      <div class="mcf-row"><span class="mcf-label">燃料費</span><span class="mcf-val">${fmtM(moFuel)}</span></div>
+      <div class="mcf-row"><span class="mcf-label">車検・法定（月按分）</span><span class="mcf-val">${fmtM(adjShaken)}</span></div>
+      <div class="mcf-row"><span class="mcf-label">修繕積立（月按分）</span><span class="mcf-val">${fmtM(adjRepair)}</span></div>
+      <div class="mcf-total"><span>月次支出合計</span><span class="mcf-val">${fmtM(moTotal)}</span></div>
+      ${moTaxBenefit>0?`<div class="mcf-net"><span>節税効果控除後</span><span class="mcf-val" style="color:var(--green)">${fmtM(moTotal-moTaxBenefit)}</span></div>`:''}
+      <div class="mcf-net"><span>実質月額コスト</span><span class="mcf-val" style="color:var(--accent);font-size:.85rem">${fmtM(moNet)}</span></div>
+    </div>`;
+  });
+  html+='</div></div>';
+  document.getElementById('monthlyCFPanel').innerHTML=html;
 }
 
 /* ===== CF TABLE ===== */
@@ -1180,16 +1259,16 @@ function resetAll(){
   document.getElementById('v-name').value='';
   document.getElementById('v-price').value='';
   document.getElementById('v-total').value='';
-  document.getElementById('v-misc').value='290000';
-  document.getElementById('v-opt').value='0';
-  document.getElementById('v-pkg').value='0';
-  document.getElementById('p-ins').value='200000';
-  document.getElementById('p-fuel').value='144000';
-  document.getElementById('p-shaken').value='310000';
-  document.getElementById('p-repair').value='250000';
-  document.getElementById('p-sale').value='3900000';
+  setNumVal('v-misc',290000);
+  setNumVal('v-opt',0);
+  setNumVal('v-pkg',0);
+  setNumVal('p-ins',200000);
+  setNumVal('p-fuel',144000);
+  setNumVal('p-shaken',310000);
+  setNumVal('p-repair',250000);
+  setNumVal('p-sale',3900000);
   // reset eco fields
-  ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>document.getElementById(id).value='0');
+  ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>setNumVal(id,0));
   // reset sliders
   ['p-tax','p-ptax','p-biz','p-years'].forEach(id=>{
     const el=document.getElementById(id);
