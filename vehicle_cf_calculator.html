@@ -248,6 +248,33 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
     <div id="db-info" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--rule2);border-radius:6px;padding:10px 14px;font-size:.8rem;line-height:1.7;color:var(--ink2)"></div>
   </div>
 
+  <!-- 新車/中古車 切替 -->
+  <div style="margin-bottom:12px">
+    <div class="toggles">
+      <div class="tog on" data-cond="new" onclick="toggleCondition(this)"><span class="dot" style="background:var(--green)"></span>新車</div>
+      <div class="tog" data-cond="used" onclick="toggleCondition(this)"><span class="dot" style="background:var(--amber)"></span>中古車</div>
+    </div>
+    <div id="used-panel" style="display:none;background:var(--bg2);border:1px solid var(--rule2);border-radius:8px;padding:14px 18px;margin-top:8px">
+      <div style="font-size:.85rem;font-weight:600;color:var(--amber);margin-bottom:10px">🔧 中古車パラメーター</div>
+      <div class="fg">
+        <div class="field">
+          <label>経過年数</label>
+          <div class="slider-wrap">
+            <input type="range" id="used-age" min="1" max="10" value="3" oninput="this.nextElementSibling.textContent=this.value+'年';updateUsedInfo()">
+            <span class="slider-val">3年</span>
+          </div>
+          <span id="used-depr-info" style="font-size:.68rem;color:var(--ink4)">耐用年数: 3年 ｜ 定率法率: 0.667</span>
+        </div>
+      </div>
+      <div style="font-size:.72rem;color:var(--ink3);margin-top:8px;line-height:1.7">
+        ※ 中古車は<b>車両価格を手動入力</b>してください（DB価格は新車価格です）<br>
+        ※ エコカー減税・CEV補助金は原則<b>新車のみ対象</b>（中古車は自動で0にリセット）<br>
+        ※ 諸費用は新車より低い傾向（目安: 15〜20万円）<br>
+        ※ 車検: 新車は初回3年後、中古は<b>2年ごと</b>（車検費用がやや増加）
+      </div>
+    </div>
+  </div>
+
   <div style="font-size:.78rem;color:var(--ink3);margin-bottom:8px">※ DB選択後も下記フォームは自由に編集できます</div>
   <div class="fg">
     <div class="field"><label>車両名称</label><input type="text" id="v-name" placeholder="例: Mercedes-Benz GLC 220d"></div>
@@ -502,9 +529,15 @@ function dbApply(){
   if(!car)return;
 
   // fill form
-  document.getElementById('v-name').value=`${car.maker} ${car.model} ${car.grade}`;
-  document.getElementById('v-price').value=car.price;
-  document.getElementById('v-misc').value=car.misc;
+  const usedSuffix=isUsedCar?' [中古]':'';
+  document.getElementById('v-name').value=`${car.maker} ${car.model} ${car.grade}${usedSuffix}`;
+  if(!isUsedCar){
+    document.getElementById('v-price').value=car.price;
+    document.getElementById('v-misc').value=car.misc;
+  }else{
+    // 中古車は価格を手動入力。諸費用は中古相場
+    document.getElementById('v-misc').value='180000';
+  }
   document.getElementById('v-opt').value=0;
   document.getElementById('v-pkg').value=0;
   autoCalcTotal();
@@ -525,28 +558,93 @@ function dbApply(){
     document.getElementById('resi-z').value=Math.round(total*Math.max(0.4,car.residual_ratio_5yr));
   }
 
-  // eco
-  document.getElementById('eco-cev').value=car.eco_cev||0;
-  document.getElementById('eco-weight').value=car.eco_weight||0;
-  document.getElementById('eco-perf').value=car.eco_perf||0;
-  document.getElementById('eco-green').value=car.eco_green||0;
-  document.getElementById('eco-local').value=car.eco_local||0;
+  // eco (中古車は原則対象外)
+  if(!isUsedCar){
+    document.getElementById('eco-cev').value=car.eco_cev||0;
+    document.getElementById('eco-weight').value=car.eco_weight||0;
+    document.getElementById('eco-perf').value=car.eco_perf||0;
+    document.getElementById('eco-green').value=car.eco_green||0;
+    document.getElementById('eco-local').value=car.eco_local||0;
+  }else{
+    ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>document.getElementById(id).value='0');
+  }
 
   // info card
   const years=+document.getElementById('p-years').value||5;
-  const ecoTotal=(car.eco_cev||0)+(car.eco_weight||0)+(car.eco_perf||0)+(car.eco_green||0)*years+(car.eco_local||0);
   const info=document.getElementById('db-info');
-  info.innerHTML=`
-    <b>${car.maker} ${car.model} ${car.grade}</b><br>
-    本体価格: <b>${(car.price/10000).toFixed(0)}万円</b>｜
-    燃料: ${car.fuel_type}｜燃費: ${car.fuel_efficiency}${car.fuel_type==='EV'?'km/kWh':'km/L'}｜
-    5年残価率: ${(car.residual_ratio_5yr*100).toFixed(0)}%<br>
-    ${ecoTotal>0?`🌿 エコカー減税・補助金合計（${years}年）: <b style="color:var(--green)">${fmt(ecoTotal)}</b>｜CEV補助: ${fmt(car.eco_cev||0)}｜重量税軽減: ${fmt(car.eco_weight||0)}｜グリーン化: ${fmt((car.eco_green||0)*years)}`:'エコカー減税: 対象外'}
-  `;
+  if(isUsedCar){
+    const up=getUsedDeprParams();
+    info.innerHTML=`
+      <b>${car.maker} ${car.model} ${car.grade}</b> <span style="color:var(--amber);font-weight:600">【中古車】</span><br>
+      新車参考価格: ${(car.price/10000).toFixed(0)}万円｜
+      燃料: ${car.fuel_type}｜燃費: ${car.fuel_efficiency}${car.fuel_type==='EV'?'km/kWh':'km/L'}<br>
+      <span style="color:var(--amber)">🔧 経過${up.age}年 → 耐用年数${up.usefulLife}年・償却率${up.rate.toFixed(3)}｜車両価格は手動入力してください｜エコ減税: 対象外</span>
+    `;
+  }else{
+    const ecoTotal=(car.eco_cev||0)+(car.eco_weight||0)+(car.eco_perf||0)+(car.eco_green||0)*years+(car.eco_local||0);
+    info.innerHTML=`
+      <b>${car.maker} ${car.model} ${car.grade}</b><br>
+      本体価格: <b>${(car.price/10000).toFixed(0)}万円</b>｜
+      燃料: ${car.fuel_type}｜燃費: ${car.fuel_efficiency}${car.fuel_type==='EV'?'km/kWh':'km/L'}｜
+      5年残価率: ${(car.residual_ratio_5yr*100).toFixed(0)}%<br>
+      ${ecoTotal>0?`🌿 エコカー減税・補助金合計（${years}年）: <b style="color:var(--green)">${fmt(ecoTotal)}</b>｜CEV補助: ${fmt(car.eco_cev||0)}｜重量税軽減: ${fmt(car.eco_weight||0)}｜グリーン化: ${fmt((car.eco_green||0)*years)}`:'エコカー減税: 対象外'}
+    `;
+  }
   info.style.display='block';
 }
 
 loadDB();
+
+/* ===== NEW / USED TOGGLE ===== */
+let isUsedCar=false;
+
+function toggleCondition(el){
+  const cond=el.dataset.cond;
+  document.querySelectorAll('[data-cond]').forEach(t=>{t.classList.remove('on')});
+  el.classList.add('on');
+  isUsedCar=(cond==='used');
+  document.getElementById('used-panel').style.display=isUsedCar?'block':'none';
+  if(isUsedCar){
+    // Reset eco incentives (used cars not eligible)
+    ['eco-cev','eco-weight','eco-perf','eco-green','eco-local'].forEach(id=>document.getElementById(id).value='0');
+    // Lower misc costs for used
+    document.getElementById('v-misc').value='180000';
+    // Increase shaken (more frequent for used)
+    document.getElementById('p-shaken').value='400000';
+    autoCalcTotal();
+    updateUsedInfo();
+  }else{
+    document.getElementById('v-misc').value='290000';
+    document.getElementById('p-shaken').value='310000';
+    autoCalcTotal();
+    // Re-apply DB eco values if a car is selected
+    const grade=document.getElementById('db-grade').value;
+    if(grade) dbApply();
+  }
+}
+
+function getUsedDeprParams(){
+  const age=+document.getElementById('used-age').value||3;
+  const legalLife=6; // 普通自動車の法定耐用年数
+  let usefulLife;
+  if(age>=legalLife){
+    // 法定耐用年数を超過: 法定耐用年数 × 20%
+    usefulLife=Math.max(2,Math.floor(legalLife*0.2));
+  }else{
+    // 残存: (法定耐用年数 - 経過年数) + (経過年数 × 20%)
+    usefulLife=Math.max(2,Math.floor((legalLife-age)+(age*0.2)));
+  }
+  // 定率法の償却率（200%定率法）
+  const rates={2:1.000,3:0.667,4:0.500,5:0.400,6:0.333};
+  const rate=rates[usefulLife]||rates[Math.min(usefulLife,6)];
+  return{age,usefulLife,rate};
+}
+
+function updateUsedInfo(){
+  const {usefulLife,rate}=getUsedDeprParams();
+  document.getElementById('used-depr-info').textContent=
+    `耐用年数: ${usefulLife}年 ｜ 定率法率: ${rate.toFixed(3)}`;
+}
 
 /* ===== THEME ===== */
 function toggleTheme(){
@@ -594,10 +692,14 @@ function pmt(annualRate,nm,pv){
 }
 
 /* ===== DEPRECIATION ===== */
-function calcDepr(total,biz){
+function calcDepr(total,biz,usefulLife,rate){
+  // usefulLife: 耐用年数（新車:3年, 中古:2-6年）
+  // rate: 定率法償却率（新車:0.667, 中古:variable）
+  usefulLife=usefulLife||3;
+  rate=rate||0.667;
   let rem=total,s=0;
-  for(let i=0;i<3;i++){const d=rem*0.667;s+=d;rem-=d}
-  s+=rem-1;
+  for(let i=0;i<usefulLife;i++){const d=rem*rate;s+=d;rem-=d}
+  s+=rem-1; // 備忘価額1円を残す
   return{deprSum:s,depr80:s*biz};
 }
 
@@ -626,7 +728,14 @@ function calculate(){
   const shaken=n('p-shaken');
   const repair=n('p-repair');
   const sale=n('p-sale');
-  const {deprSum,depr80}=calcDepr(total,biz);
+  // 減価償却（中古車特例対応）
+  let deprLife=3, deprRate=0.667;
+  if(isUsedCar){
+    const up=getUsedDeprParams();
+    deprLife=up.usefulLife;
+    deprRate=up.rate;
+  }
+  const {deprSum,depr80}=calcDepr(total,biz,deprLife,deprRate);
 
   // エコカー減税・補助金
   const ecoCev=n('eco-cev');       // CEV補助金（取得コスト軽減）
@@ -750,7 +859,7 @@ function calculate(){
   methods.sort((a,b)=>a.net-b.net);
   methods.forEach((m,i)=>m.rank=i+1);
 
-  renderResults(methods,{total,taxRate,pTaxRate,biz,years,nm,sale,ins5,fuel5,shaken,repair,depr80});
+  renderResults(methods,{total,taxRate,pTaxRate,biz,years,nm,sale,ins5,fuel5,shaken,repair,depr80,isUsed:isUsedCar,deprLife,deprRate});
 }
 
 /* ===== RENDER ===== */
@@ -760,7 +869,7 @@ function renderResults(methods,p){
 
   // banner
   document.getElementById('resultBanner').innerHTML=
-    `<h2>${vname}</h2><div class="cond">法人税率 ${(p.taxRate*100).toFixed(0)}%｜個人税率 ${(p.pTaxRate*100).toFixed(0)}%｜業務使用 ${(p.biz*100).toFixed(0)}%｜比較期間 ${years}年｜取得総額 ${fmt(n('v-total'))}</div>`;
+    `<h2>${vname}${p.isUsed?' <span style="font-size:.8rem;color:var(--amber)">（中古車）</span>':''}</h2><div class="cond">${p.isUsed?`中古車（耐用年数${p.deprLife}年・償却率${p.deprRate.toFixed(3)}）｜`:''}法人税率 ${(p.taxRate*100).toFixed(0)}%｜個人税率 ${(p.pTaxRate*100).toFixed(0)}%｜業務使用 ${(p.biz*100).toFixed(0)}%｜比較期間 ${years}年｜取得総額 ${fmt(n('v-total'))}</div>`;
 
   // Summary cards with calculation waterfall
   const ordinals=['1st','2nd','3rd','4th','5th','6th','7th'];
@@ -810,7 +919,7 @@ function renderResults(methods,p){
   // Footer
   const today=new Date();
   document.getElementById('footerText').innerHTML=
-    `計算前提・免責：法人税率${(p.taxRate*100).toFixed(0)}%・個人事業主税率${(p.pTaxRate*100).toFixed(0)}%・業務使用割合${(p.biz*100).toFixed(0)}%で試算。個人メソッドは個人事業主を前提（給与所得者は税メリットなし）。減価償却は定率法3年（率0.667）を前提。維持費は入力値を${years}年分で按分。リース月額は元利均等計算（実際のリース会社見積もりと異なる場合あり）。本ツールの計算結果はあくまで参考値です。最終的な税務・財務判断は担当税理士・顧問へご確認ください。<br>Powered by U&I 株式会社 コンサルティング事業部　${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')} 作成`;
+    `計算前提・免責：法人税率${(p.taxRate*100).toFixed(0)}%・個人事業主税率${(p.pTaxRate*100).toFixed(0)}%・業務使用割合${(p.biz*100).toFixed(0)}%で試算。個人メソッドは個人事業主を前提（給与所得者は税メリットなし）。減価償却は定率法${p.isUsed?p.deprLife+'年（中古車特例・率'+p.deprRate.toFixed(3)+')':'3年（率0.667）'}を前提。維持費は入力値を${years}年分で按分。リース月額は元利均等計算（実際のリース会社見積もりと異なる場合あり）。本ツールの計算結果はあくまで参考値です。最終的な税務・財務判断は担当税理士・顧問へご確認ください。<br>Powered by U&I 株式会社 コンサルティング事業部　${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')} 作成`;
 
   document.getElementById('results').style.display='block';
   document.getElementById('results').scrollIntoView({behavior:'smooth'});
@@ -1059,6 +1168,12 @@ function resetAll(){
   if(dbMaker){dbMaker.value='';document.getElementById('db-model').innerHTML='<option value="">-- モデル --</option>';document.getElementById('db-grade').innerHTML='<option value="">-- グレード --</option>';}
   const dbInfo=document.getElementById('db-info');
   if(dbInfo){dbInfo.style.display='none';dbInfo.innerHTML='';}
+  // reset new/used toggle
+  isUsedCar=false;
+  document.querySelectorAll('[data-cond]').forEach(t=>{t.classList.toggle('on',t.dataset.cond==='new')});
+  document.getElementById('used-panel').style.display='none';
+  const usedAge=document.getElementById('used-age');
+  if(usedAge){usedAge.value=3;usedAge.nextElementSibling.textContent='3年';}
 }
 
 /* ===== PDF ===== */
