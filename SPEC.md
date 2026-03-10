@@ -21,7 +21,7 @@
 |------|------|
 | 形式 | 単一HTMLファイル（CSS/JS埋め込み） |
 | 外部依存 | Google Fonts（Noto Sans JP / Lora / JetBrains Mono）、html2pdf.js（CDN） |
-| 車両DB | `vehicles_data.json`（GitHub Pages配信、370車種） |
+| 車両DB | `vehicles_data.json`（GitHub Pages配信、394車種） |
 | ホスティング | GitHub Pages（`yskzz121.github.io/vehicle-cf-calculator`） |
 | ファイル構成 | `vehicle_cf_calculator.html` = `index.html`（同一内容） |
 
@@ -396,8 +396,8 @@ function getResidualRate(car, years) {
 ### 8.1 概要
 | 項目 | 内容 |
 |------|------|
-| 車種数 | 370車種 |
-| メーカー数 | 16メーカー |
+| 車種数 | 394車種 |
+| メーカー数 | 19メーカー |
 | 形式 | JSONファイル |
 | 配信 | GitHub Pages CDN |
 
@@ -418,7 +418,10 @@ function getResidualRate(car, years) {
 | Porsche | 14 |
 | Suzuki | 13 |
 | Mitsubishi | 12 |
+| Alfa Romeo | 12 |
+| Ferrari | 7 |
 | Tesla | 6 |
+| Lamborghini | 5 |
 | Daihatsu | 8 |
 
 ### 8.3 データスキーマ
@@ -575,3 +578,6 @@ function getResidualRate(car, years) {
 | 2026-03-10 | サマリーカードのマイナス記号二重表示バグ修正 |
 | 2026-03-10 | Toyota 26車種追加（ランクル70/プラド/GRヤリス/GRカローラ/カローラ/カローラツーリング/アクア/ライズ） |
 | 2026-03-10 | Tesla 6車種追加（Model 3/Model Y 各3グレード） |
+| 2026-03-10 | Lamborghini 5車種追加（Urus 3グレード/Temerario/Revuelto） |
+| 2026-03-10 | Ferrari 7車種追加（ローマ/296 GTB・GTS/プロサングエ/SF90/12チリンドリ） |
+| 2026-03-10 | Alfa Romeo 12車種追加（Junior/Tonale/Giulia/Stelvio） |
