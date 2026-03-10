@@ -172,6 +172,28 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
 <div class="step" id="step1">
   <div class="step-title"><span>Step 01</span> 車両選択</div>
 
+  <!-- DB選択パネル -->
+  <div style="background:var(--bg2);border:1px solid var(--rule2);border-radius:8px;padding:16px;margin-bottom:14px">
+    <div style="font-size:.85rem;font-weight:600;color:var(--accent);margin-bottom:10px">🚗 車両データベースから選択（144車種）</div>
+    <div class="fg" style="margin-bottom:10px">
+      <div class="field">
+        <label>メーカー</label>
+        <select id="db-maker" onchange="dbUpdateModels()"><option value="">選択してください</option></select>
+      </div>
+      <div class="field">
+        <label>モデル</label>
+        <select id="db-model" onchange="dbUpdateGrades()"><option value="">選択してください</option></select>
+      </div>
+      <div class="field">
+        <label>グレード</label>
+        <select id="db-grade" onchange="dbApply()"><option value="">選択してください</option></select>
+      </div>
+    </div>
+    <div id="db-status" style="font-size:.75rem;color:var(--ink4)">データベース読み込み中…</div>
+    <div id="db-info" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--rule2);border-radius:6px;padding:10px 14px;font-size:.8rem;line-height:1.7;color:var(--ink2)"></div>
+  </div>
+
+  <div style="font-size:.78rem;color:var(--ink3);margin-bottom:8px">※ DB選択後も下記フォームは自由に編集できます</div>
   <div class="fg">
     <div class="field"><label>車両名称</label><input type="text" id="v-name" placeholder="例: Mercedes-Benz GLC 220d"></div>
     <div class="field"><label>車両本体価格（円）</label><input type="number" id="v-price" value="" oninput="autoCalcTotal()"></div>
@@ -346,6 +368,104 @@ footer{margin-top:30px;padding:18px 0;border-top:1px solid var(--rule);font-size
 </div><!-- /container -->
 
 <script>
+/* ===== VEHICLE DB ===== */
+const DB_URL='https://yskzz121.github.io/vehicle-cf-calculator/vehicles_data.json';
+let vehicleDB=[];
+
+async function loadDB(){
+  const status=document.getElementById('db-status');
+  try{
+    const res=await fetch(DB_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    vehicleDB=await res.json();
+    // populate makers
+    const makers=[...new Set(vehicleDB.map(v=>v.maker))];
+    const sel=document.getElementById('db-maker');
+    makers.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o)});
+    status.textContent=`${vehicleDB.length}車種のデータを読み込み済み`;
+  }catch(e){status.textContent='DB読み込みエラー: '+e.message+' （手動入力をご利用ください）'}
+}
+
+function dbUpdateModels(){
+  const maker=document.getElementById('db-maker').value;
+  const modelSel=document.getElementById('db-model');
+  const gradeSel=document.getElementById('db-grade');
+  modelSel.innerHTML='<option value="">選択してください</option>';
+  gradeSel.innerHTML='<option value="">選択してください</option>';
+  document.getElementById('db-info').style.display='none';
+  if(!maker)return;
+  const models=[...new Set(vehicleDB.filter(v=>v.maker===maker).map(v=>v.model))];
+  models.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;modelSel.appendChild(o)});
+}
+
+function dbUpdateGrades(){
+  const maker=document.getElementById('db-maker').value;
+  const model=document.getElementById('db-model').value;
+  const gradeSel=document.getElementById('db-grade');
+  gradeSel.innerHTML='<option value="">選択してください</option>';
+  document.getElementById('db-info').style.display='none';
+  if(!maker||!model)return;
+  const grades=vehicleDB.filter(v=>v.maker===maker&&v.model===model);
+  grades.forEach(g=>{
+    const o=document.createElement('option');
+    o.value=g.grade;
+    o.textContent=`${g.grade}（${(g.price/10000).toFixed(0)}万円・${g.fuel_type}）`;
+    gradeSel.appendChild(o);
+  });
+}
+
+function dbApply(){
+  const maker=document.getElementById('db-maker').value;
+  const model=document.getElementById('db-model').value;
+  const grade=document.getElementById('db-grade').value;
+  if(!grade)return;
+  const car=vehicleDB.find(v=>v.maker===maker&&v.model===model&&v.grade===grade);
+  if(!car)return;
+
+  // fill form
+  document.getElementById('v-name').value=`${car.maker} ${car.model} ${car.grade}`;
+  document.getElementById('v-price').value=car.price;
+  document.getElementById('v-misc').value=car.misc;
+  autoCalcTotal();
+
+  // insurance & fuel
+  if(car.insurance_annual) document.getElementById('p-ins').value=car.insurance_annual;
+  if(car.fuel_efficiency&&car.fuel_efficiency>0){
+    let fp=175;
+    if(car.fuel_type==='ディーゼル')fp=155;
+    else if(car.fuel_type==='EV')fp=30;
+    document.getElementById('p-fuel').value=Math.round(1000/car.fuel_efficiency*fp*12);
+  }
+
+  // sale & residual
+  const total=n('v-total');
+  if(car.residual_ratio_5yr!=null&&total>0){
+    document.getElementById('p-sale').value=Math.round(total*car.residual_ratio_5yr);
+    document.getElementById('resi-z').value=Math.round(total*Math.max(0.4,car.residual_ratio_5yr));
+  }
+
+  // eco
+  document.getElementById('eco-cev').value=car.eco_cev||0;
+  document.getElementById('eco-weight').value=car.eco_weight||0;
+  document.getElementById('eco-perf').value=car.eco_perf||0;
+  document.getElementById('eco-green').value=car.eco_green||0;
+  document.getElementById('eco-local').value=car.eco_local||0;
+
+  // info card
+  const ecoTotal=(car.eco_cev||0)+(car.eco_weight||0)+(car.eco_perf||0)+(car.eco_green||0)*5+(car.eco_local||0);
+  const info=document.getElementById('db-info');
+  info.innerHTML=`
+    <b>${car.maker} ${car.model} ${car.grade}</b><br>
+    本体価格: <b>${(car.price/10000).toFixed(0)}万円</b>｜
+    燃料: ${car.fuel_type}｜燃費: ${car.fuel_efficiency}${car.fuel_type==='EV'?'km/kWh':'km/L'}｜
+    5年残価率: ${(car.residual_ratio_5yr*100).toFixed(0)}%<br>
+    ${ecoTotal>0?`🌿 エコカー減税・補助金合計（5年）: <b style="color:var(--green)">${fmt(ecoTotal)}</b>｜CEV補助: ${fmt(car.eco_cev||0)}｜重量税軽減: ${fmt(car.eco_weight||0)}｜グリーン化: ${fmt((car.eco_green||0)*5)}`:'エコカー減税: 対象外'}
+  `;
+  info.style.display='block';
+}
+
+loadDB();
+
 /* ===== THEME ===== */
 function toggleTheme(){
   document.body.classList.toggle('dark');
