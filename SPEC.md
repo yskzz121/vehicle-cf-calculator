@@ -21,7 +21,7 @@
 |------|------|
 | 形式 | 単一HTMLファイル（CSS/JS埋め込み） |
 | 外部依存 | Google Fonts（Noto Sans JP / Lora / JetBrains Mono）、html2pdf.js（CDN） |
-| 車両DB | `vehicles_data.json`（GitHub Pages配信、338車種） |
+| 車両DB | `vehicles_data.json`（GitHub Pages配信、370車種） |
 | ホスティング | GitHub Pages（`yskzz121.github.io/vehicle-cf-calculator`） |
 | ファイル構成 | `vehicle_cf_calculator.html` = `index.html`（同一内容） |
 
@@ -396,15 +396,15 @@ function getResidualRate(car, years) {
 ### 8.1 概要
 | 項目 | 内容 |
 |------|------|
-| 車種数 | 338車種 |
-| メーカー数 | 15メーカー |
+| 車種数 | 370車種 |
+| メーカー数 | 16メーカー |
 | 形式 | JSONファイル |
 | 配信 | GitHub Pages CDN |
 
 ### 8.2 メーカー別車種数
 | メーカー | 車種数 |
 |---------|--------|
-| Toyota | 65 |
+| Toyota | 91 |
 | Honda | 31 |
 | Mercedes-Benz | 31 |
 | Lexus | 28 |
@@ -418,6 +418,7 @@ function getResidualRate(car, years) {
 | Porsche | 14 |
 | Suzuki | 13 |
 | Mitsubishi | 12 |
+| Tesla | 6 |
 | Daihatsu | 8 |
 
 ### 8.3 データスキーマ
@@ -572,3 +573,5 @@ function getResidualRate(car, years) {
 | 2026-03-10 | Mercedes-Benz G-Class（4グレード）をDBに追加 |
 | 2026-03-10 | 比較期間スライダーと売却想定額の連動 |
 | 2026-03-10 | サマリーカードのマイナス記号二重表示バグ修正 |
+| 2026-03-10 | Toyota 26車種追加（ランクル70/プラド/GRヤリス/GRカローラ/カローラ/カローラツーリング/アクア/ライズ） |
+| 2026-03-10 | Tesla 6車種追加（Model 3/Model Y 各3グレード） |
